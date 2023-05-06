@@ -11,7 +11,8 @@ import (
 )
 
 const FirstSeed = "d94155d877b8150f6215ad5bc6917989fd88888c045a21791fed17e0ae916bec"
-const ReceiverAddress = "mv4rnyY3Su5gjcDNzbMLKBQkBicCtHUtFB"
+const FirstMiningAddress = "SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi"
+const FirstReceiverAddress = "SVX3xWuraCUkRd7kg788LKrNNiCVvHoGsq"
 
 func CreateCommitTx(txId string, outputIndex uint32, receiverAddress string) *wire.MsgTx {
 	redeemTx := wire.NewMsgTx(wire.TxVersion)
@@ -22,7 +23,7 @@ func CreateCommitTx(txId string, outputIndex uint32, receiverAddress string) *wi
 	redeemTx.AddTxIn(txIn)
 
 	rcvScript := GetPayToAddrScript(receiverAddress)
-	txOut := wire.NewTxOut(1000, rcvScript)
+	txOut := wire.NewTxOut(30, rcvScript)
 	redeemTx.AddTxOut(txOut)
 
 	return redeemTx
@@ -47,5 +48,21 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(result[0].Address)
+	privKey, _, _ := GetPrivateKey(FirstSeed)
+	commitTx := CreateCommitTx(result[0].TxID, result[0].Vout, FirstReceiverAddress)
+	SignTx(commitTx, GetPayToAddrScript(FirstMiningAddress), privKey)
+	hash, err := client.SendRawTransaction(commitTx, false)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	randomPrivateKey, _ := secp256k1.GeneratePrivateKey()
+	revealTx, taprootAddr, err := RevealTx([]byte("Hello World"), *hash, *commitTx.TxOut[0], 0, randomPrivateKey)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(taprootAddr)
+	fmt.Println(revealTx)
+
 }
