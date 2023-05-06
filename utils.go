@@ -50,7 +50,7 @@ func GetDataDir(dataDir string) string {
 		path = dirname
 	}
 
-	return path + "testnet"
+	return path + "simnet"
 }
 
 func GetBitcoinRPCClient() (*rpcclient.Client, error) {
@@ -78,14 +78,14 @@ func InitializeWallet(passPhrase string, create bool) (*wallet.Wallet, error) {
 	pubPass := []byte(wallet.InsecurePubPassphrase)
 
 	basePath := btcutil.AppDataDir("btcwallet", false)
-	dbPath := filepath.Join(basePath+"/testnet/", wallet.WalletDBName)
+	dbPath := filepath.Join(basePath+"/simnet/", wallet.WalletDBName)
 	if create {
 		db, err := walletdb.Create("bdb", dbPath, true, 3*time.Second)
 		if err != nil {
 			return nil, err
 		}
 		defer db.Close()
-		err = wallet.Create(db, pubPass, privPass, nil, &chaincfg.TestNet3Params, time.Now())
+		err = wallet.Create(db, pubPass, privPass, nil, &chaincfg.SimNetParams, time.Now())
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func InitializeWallet(passPhrase string, create bool) (*wallet.Wallet, error) {
 }
 
 func InitWallet(dbDir string) *wallet.Wallet {
-	loader := wallet.NewLoader(&chaincfg.TestNet3Params, dbDir, true, 10*time.Second, 250)
+	loader := wallet.NewLoader(&chaincfg.SimNetParams, dbDir, true, 10*time.Second, 250)
 	w, loaded := loader.LoadedWallet()
 	fmt.Println(loaded)
 	return w
@@ -112,12 +112,11 @@ func InitWallet(dbDir string) *wallet.Wallet {
 
 func GetBitcoinWalletRpcClient() (*rpcclient.Client, error) {
 	certs, _ := LoadCerts("btcwallet")
-
 	client, err := rpcclient.New(&rpcclient.ConnConfig{
-		Host:         "localhost:18332",
+		Host:         "localhost:18554",
 		Endpoint:     "ws",
-		User:         "4bmeiF7E3ny8cGf8Ok6QJZy/0pk=",
-		Pass:         "2oljjSoRFzC5Go7hCGDID6xWi+c=",
+		User:         "youruser",
+		Pass:         "SomeDecentp4ssw0rd",
 		Certificates: certs,
 	}, nil)
 	if err != nil {

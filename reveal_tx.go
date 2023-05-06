@@ -42,7 +42,7 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	outputKey := txscript.ComputeTaprootOutputKey(
 		pubKey, tapScriptRootHash[:],
 	)
-	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), &chaincfg.TestNet3Params)
+	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), &chaincfg.SimNetParams)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
 	}

@@ -10,8 +10,8 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-const test_seed = "9342699543d27d60b4168285cd1598175d98cc15c3483441cb8331e56f9ae3ae"
-const receiver_address = "mv4rnyY3Su5gjcDNzbMLKBQkBicCtHUtFB"
+const FirstSeed = "d94155d877b8150f6215ad5bc6917989fd88888c045a21791fed17e0ae916bec"
+const ReceiverAddress = "mv4rnyY3Su5gjcDNzbMLKBQkBicCtHUtFB"
 
 func CreateCommitTx(txId string, outputIndex uint32, receiverAddress string) *wire.MsgTx {
 	redeemTx := wire.NewMsgTx(wire.TxVersion)
@@ -37,13 +37,15 @@ func SignTx(redeemTx *wire.MsgTx, subscript []byte, privKey *secp256k1.PrivateKe
 }
 
 func main() {
-	priv, addr := GetKeyAddressFromPrivateKey(test_seed)
 	client, err := GetBitcoinWalletRpcClient()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(priv.Key)
-	fmt.Println(addr)
-	fmt.Println(client.ListUnspent())
+	result, err := client.ListUnspent()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(result[0].Address)
 }

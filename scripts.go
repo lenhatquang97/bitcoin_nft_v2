@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"log"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -11,22 +10,18 @@ import (
 )
 
 func GetPayToAddrScript(address string) []byte {
-	rcvAddress, _ := btcutil.DecodeAddress(address, &chaincfg.TestNet3Params)
+	rcvAddress, _ := btcutil.DecodeAddress(address, &chaincfg.SimNetParams)
 	rcvScript, _ := txscript.PayToAddrScript(rcvAddress)
 	return rcvScript
 }
 
-func GetKeyAddressFromPrivateKey(privKey string) (*btcec.PrivateKey, string) {
+func GetPrivateKey(privKey string) (*btcec.PrivateKey, *btcec.PublicKey, error) {
 	privByte, err := hex.DecodeString(privKey)
 
 	if err != nil {
-		log.Panic(err)
+		return nil, nil, err
 	}
 
 	priv, pubKey := btcec.PrivKeyFromBytes(privByte) //secp256k1
-
-	address, _ := btcutil.NewAddressPubKeyHash(
-		btcutil.Hash160(pubKey.SerializeUncompressed()), &chaincfg.TestNet3Params)
-
-	return priv, address.EncodeAddress()
+	return priv, pubKey, nil
 }
