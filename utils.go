@@ -1,17 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcwallet/wallet"
-	"github.com/btcsuite/btcwallet/walletdb"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 )
 
@@ -38,21 +32,6 @@ func LoadCerts(baseFolder string) ([]byte, error) {
 	return certs, nil
 }
 
-func GetDataDir(dataDir string) string {
-	path := ""
-	if dataDir != "" {
-		path = dataDir
-	} else {
-		dirname, err := os.UserConfigDir()
-		if err != nil {
-			return ""
-		}
-		path = dirname
-	}
-
-	return path + "simnet"
-}
-
 func GetBitcoinRPCClient() (*rpcclient.Client, error) {
 	certs, err := LoadCerts("btcd")
 	if err != nil {
@@ -73,43 +52,6 @@ func GetBitcoinRPCClient() (*rpcclient.Client, error) {
 	return client, nil
 }
 
-func InitializeWallet(passPhrase string, create bool) (*wallet.Wallet, error) {
-	privPass := []byte("password")
-	pubPass := []byte(wallet.InsecurePubPassphrase)
-
-	basePath := btcutil.AppDataDir("btcwallet", false)
-	dbPath := filepath.Join(basePath+"/simnet/", wallet.WalletDBName)
-	if create {
-		db, err := walletdb.Create("bdb", dbPath, true, 3*time.Second)
-		if err != nil {
-			return nil, err
-		}
-		defer db.Close()
-		err = wallet.Create(db, pubPass, privPass, nil, &chaincfg.SimNetParams, time.Now())
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		db, err := walletdb.Open("bdb", dbPath, true, 3*time.Second)
-		if err != nil {
-			return nil, err
-		}
-		defer db.Close()
-		wallet := InitWallet(dbPath)
-		return wallet, nil
-	}
-
-	fmt.Println("The wallet has been created successfully.")
-	return nil, nil
-}
-
-func InitWallet(dbDir string) *wallet.Wallet {
-	loader := wallet.NewLoader(&chaincfg.SimNetParams, dbDir, true, 10*time.Second, 250)
-	w, loaded := loader.LoadedWallet()
-	fmt.Println(loaded)
-	return w
-}
-
 func GetBitcoinWalletRpcClient() (*rpcclient.Client, error) {
 	certs, _ := LoadCerts("btcwallet")
 	client, err := rpcclient.New(&rpcclient.ConnConfig{
@@ -118,6 +60,7 @@ func GetBitcoinWalletRpcClient() (*rpcclient.Client, error) {
 		User:         "youruser",
 		Pass:         "SomeDecentp4ssw0rd",
 		Certificates: certs,
+		Params:       "simnet",
 	}, nil)
 	if err != nil {
 		return nil, err
