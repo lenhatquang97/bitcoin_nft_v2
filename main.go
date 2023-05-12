@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -36,7 +37,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
+	fmt.Println("Success")
 	fmt.Println(hash)
 }
 
@@ -44,8 +45,17 @@ func NewTx() (*wire.MsgTx, error) {
 	return wire.NewMsgTx(wire.TxVersion), nil
 }
 
+func GetUtxo(utxos []btcjson.ListUnspentResult, address string) (string, uint32, float64) {
+	for i := 0; i < len(utxos); i++ {
+		if utxos[i].Address == address {
+			return utxos[i].TxID, utxos[i].Vout, utxos[i].Amount
+		}
+	}
+	return "", 0, -1
+}
+
 func CreateTx(destination string, amount int64, client *rpcclient.Client) (*wire.MsgTx, error) {
-	defaultAddress, err := client.GetAccountAddress("default")
+	defaultAddress, err := btcutil.DecodeAddress("SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ", &chaincfg.SimNetParams)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +70,11 @@ func CreateTx(destination string, amount int64, client *rpcclient.Client) (*wire
 		return nil, err
 	}
 
-	txid := utxos[0].TxID
-	balance := utxos[0].Amount
+	txid, vout, balance := GetUtxo(utxos, defaultAddress.EncodeAddress())
+	if len(txid) == 0 {
+		return nil, fmt.Errorf("no utxos")
+	}
+
 	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
 
 	if err != nil {
@@ -94,7 +107,7 @@ func CreateTx(destination string, amount int64, client *rpcclient.Client) (*wire
 		return nil, err
 	}
 
-	outPoint := wire.NewOutPoint(utxoHash, 0)
+	outPoint := wire.NewOutPoint(utxoHash, vout)
 
 	// making the input, and adding it to transaction
 	txIn := wire.NewTxIn(outPoint, nil, nil)
