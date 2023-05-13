@@ -59,7 +59,7 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		},
 	})
 
-	opReturnScript, err := txscript.NullDataScript([]byte("https://trustless.computer"))
+	opReturnScript, err := txscript.NullDataScript([]byte("https://example.com"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating op return script: %v", err)
 	}

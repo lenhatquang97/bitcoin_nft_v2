@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -25,7 +26,7 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTxV2("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 80, client)
+	rawTx, wif, err := CreateTxV2("sb1qvf8geaawm5v59cfl6v6l2nu9hxwz2dk964u92k", 8000, client)
 
 	if err != nil {
 		fmt.Println(err)
@@ -45,12 +46,12 @@ func main() {
 		return
 	}
 
-	tx, address, err := RevealTx([]byte("Hello World"), *hash, *commitTx.MsgTx().TxOut[0], 0, wif.PrivKey)
+	tx, _, err := RevealTx([]byte("Hello World"), *hash, *commitTx.MsgTx().TxOut[0], 0, wif.PrivKey)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(address)
+
 	revealTx, err := client.SendRawTransaction(tx, true)
 	if err != nil {
 		fmt.Println(err)
@@ -145,7 +146,7 @@ func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wi
 		return nil, nil, fmt.Errorf("no utxos")
 	}
 
-	PrintLogUtxos(sendUtxos)
+	//PrintLogUtxos(sendUtxos)
 
 	var balance float64
 	for _, item := range sendUtxos {
@@ -164,7 +165,8 @@ func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wi
 	}
 
 	// extracting destination address as []byte from function argument (destination string)
-	destinationAddr, err := btcutil.DecodeAddress(destination, &chaincfg.SimNetParams)
+	tapKey := txscript.ComputeTaprootKeyNoScript(wif.PrivKey.PubKey())
+	destinationAddr, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(tapKey), &chaincfg.SimNetParams)
 	if err != nil {
 		return nil, nil, err
 	}
