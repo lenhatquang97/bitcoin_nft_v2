@@ -24,7 +24,7 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTxV2("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 80, client)
+	rawTx, wif, err := CreateTxV2("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 120, client)
 
 	if err != nil {
 		fmt.Println(err)
@@ -86,10 +86,6 @@ func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float
 				Vout:   utxos[i].Vout,
 				Amount: utxos[i].Amount,
 			})
-		}
-
-		if utxos[i].TxID == "c9f48e0ccf6bccd9018944d330bb1df485560bb0a94c364d2492fd336ab63e8c" {
-			fmt.Println(utxos[i])
 		}
 	}
 	var res []*MyUtxo
@@ -261,12 +257,13 @@ func CreateTx(destination string, amount int64, client *rpcclient.Client) (*wire
 }
 
 func SignTx(wif *btcutil.WIF, pkScript []byte, redeemTx *wire.MsgTx) (*wire.MsgTx, error) {
-	signature, err := txscript.SignatureScript(redeemTx, 0, pkScript, txscript.SigHashAll, wif.PrivKey, true)
-	if err != nil {
-		return nil, err
+	for i, _ := range redeemTx.TxIn {
+		signature, err := txscript.SignatureScript(redeemTx, i, pkScript, txscript.SigHashAll, wif.PrivKey, true)
+		if err != nil {
+			return nil, err
+		}
+
+		redeemTx.TxIn[i].SignatureScript = signature
 	}
-
-	redeemTx.TxIn[0].SignatureScript = signature
-
 	return redeemTx, nil
 }
