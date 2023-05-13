@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -24,7 +25,7 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTxV2("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 120, client)
+	rawTx, wif, err := CreateTxV2("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 80, client)
 
 	if err != nil {
 		fmt.Println(err)
@@ -103,8 +104,28 @@ func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float
 	return res
 }
 
+func GetActualBalance(client *rpcclient.Client, actualAddress string) (int, error) {
+	utxos, err := client.ListUnspent()
+	if err != nil {
+		return -1, err
+	}
+
+	amount := 0
+
+	for i := 0; i < len(utxos); i++ {
+		if utxos[i].Address == actualAddress {
+			amount += int(utxos[i].Amount)
+		}
+	}
+	return amount, nil
+}
+
 func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
-	defaultAddress, err := btcutil.DecodeAddress("SeTCfjeSQYevShUDEqo59GH1V5kqnP4dg5", &chaincfg.SimNetParams)
+	senderAddress := "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ"
+
+	//actualBalance, _ := GetActualBalance(client, senderAddress)
+
+	defaultAddress, err := btcutil.DecodeAddress(senderAddress, &chaincfg.SimNetParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -123,6 +144,8 @@ func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wi
 	if len(sendUtxos) == 0 {
 		return nil, nil, fmt.Errorf("no utxos")
 	}
+
+	PrintLogUtxos(sendUtxos)
 
 	var balance float64
 	for _, item := range sendUtxos {
@@ -173,6 +196,17 @@ func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wi
 	// the transaction as output
 	redeemTxOut := wire.NewTxOut(amount, destinationAddrByte)
 	redeemTx.AddTxOut(redeemTxOut)
+
+	// changeAddress, err := client.GetRawChangeAddress("default")
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+	// changePkScript, err := txscript.PayToAddrScript(changeAddress)
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+	// changeTxOut := wire.NewTxOut(20, changePkScript)
+	// redeemTx.AddTxOut(changeTxOut)
 
 	// now sign the transaction
 	finalRawTx, err := SignTx(wif, pkScript, redeemTx)
