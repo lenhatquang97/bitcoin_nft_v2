@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -25,7 +24,7 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTx("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 40, client)
+	rawTx, wif, err := CreateTxV2("SZnK16oMnqQt8Q1qLvrTpYLpkpkFG9eVRi", 80, client)
 
 	if err != nil {
 		fmt.Println(err)
@@ -72,8 +71,124 @@ func GetUtxo(utxos []btcjson.ListUnspentResult, address string) (string, uint32,
 	return "", 0, -1
 }
 
+type MyUtxo struct {
+	TxID   string
+	Vout   uint32
+	Amount float64
+}
+
+func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float64) []*MyUtxo {
+	var myUtxos []*MyUtxo
+	for i := 0; i < len(utxos); i++ {
+		if utxos[i].Address == address {
+			myUtxos = append(myUtxos, &MyUtxo{
+				TxID:   utxos[i].TxID,
+				Vout:   utxos[i].Vout,
+				Amount: utxos[i].Amount,
+			})
+		}
+
+		if utxos[i].TxID == "c9f48e0ccf6bccd9018944d330bb1df485560bb0a94c364d2492fd336ab63e8c" {
+			fmt.Println(utxos[i])
+		}
+	}
+	var res []*MyUtxo
+	//sort.Slice(myUtxos, func(i, j int) bool {
+	//	return myUtxos[i].Amount < myUtxos[j].Amount
+	//})
+	for _, utxo := range myUtxos {
+		res = append(res, utxo)
+		amount -= utxo.Amount
+		if amount <= 0 {
+			break
+		}
+	}
+
+	return res
+}
+
+func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
+	defaultAddress, err := btcutil.DecodeAddress("SeTCfjeSQYevShUDEqo59GH1V5kqnP4dg5", &chaincfg.SimNetParams)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	wif, err := client.DumpPrivKey(defaultAddress)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	utxos, err := client.ListUnspent()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sendUtxos := GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
+	if len(sendUtxos) == 0 {
+		return nil, nil, fmt.Errorf("no utxos")
+	}
+
+	var balance float64
+	for _, item := range sendUtxos {
+		balance += item.Amount
+	}
+
+	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// checking for sufficiency of account
+	if int64(balance) < amount {
+		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
+	}
+
+	// extracting destination address as []byte from function argument (destination string)
+	destinationAddr, err := btcutil.DecodeAddress(destination, &chaincfg.SimNetParams)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	destinationAddrByte, err := txscript.PayToAddrScript(destinationAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	redeemTx, err := NewTx()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, utxo := range sendUtxos {
+		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		outPoint := wire.NewOutPoint(utxoHash, utxo.Vout)
+
+		// making the input, and adding it to transaction
+		txIn := wire.NewTxIn(outPoint, nil, nil)
+		redeemTx.AddTxIn(txIn)
+	}
+
+	// adding the destination address and the amount to
+	// the transaction as output
+	redeemTxOut := wire.NewTxOut(amount, destinationAddrByte)
+	redeemTx.AddTxOut(redeemTxOut)
+
+	// now sign the transaction
+	finalRawTx, err := SignTx(wif, pkScript, redeemTx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return finalRawTx, wif, nil
+}
+
 func CreateTx(destination string, amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
-	defaultAddress, err := btcutil.DecodeAddress("SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ", &chaincfg.SimNetParams)
+	defaultAddress, err := btcutil.DecodeAddress("SeTCfjeSQYevShUDEqo59GH1V5kqnP4dg5", &chaincfg.SimNetParams)
 	if err != nil {
 		return nil, nil, err
 	}
