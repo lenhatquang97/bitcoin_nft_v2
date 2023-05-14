@@ -26,7 +26,7 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTxV2("sb1qvf8geaawm5v59cfl6v6l2nu9hxwz2dk964u92k", 8000, client)
+	rawTx, wif, err := CreateTxV2(8000, client)
 
 	if err != nil {
 		fmt.Println(err)
@@ -45,7 +45,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
 	tx, _, err := RevealTx([]byte("Hello World"), *hash, *commitTx.MsgTx().TxOut[0], 0, wif.PrivKey)
 	if err != nil {
 		fmt.Println(err)
@@ -121,7 +120,7 @@ func GetActualBalance(client *rpcclient.Client, actualAddress string) (int, erro
 	return amount, nil
 }
 
-func CreateTxV2(destination string, amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
+func CreateTxV2(amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
 	senderAddress := "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ"
 
 	//actualBalance, _ := GetActualBalance(client, senderAddress)
