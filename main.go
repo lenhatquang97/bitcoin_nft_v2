@@ -26,7 +26,7 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTxV2(8000, client)
+	rawTx, wif, err := CreateTxV2(10000, client)
 
 	if err != nil {
 		fmt.Println(err)
@@ -40,23 +40,37 @@ func main() {
 	}
 	fmt.Println("Success")
 
-	commitTx, err := client.GetRawTransaction(hash)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	tx, _, err := RevealTx([]byte("Hello World"), *hash, *commitTx.MsgTx().TxOut[0], 0, wif.PrivKey)
+	fundTx, err := client.GetRawTransaction(hash)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	revealTx, err := client.SendRawTransaction(tx, true)
+	commitSignedTx, err := CommitTx(wif, fundTx, hash, 0)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(revealTx)
+
+	commitTxHash, err := client.SendRawTransaction(commitSignedTx, false)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(commitTxHash)
+
+	// tx, _, err := RevealTx([]byte("Hello World"), *hash, *fundTx.MsgTx().TxOut[0], 0, wif.PrivKey)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	// revealTx, err := client.SendRawTransaction(tx, true)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Println(revealTx)
 }
 
 func NewTx() (*wire.MsgTx, error) {
@@ -192,90 +206,6 @@ func CreateTxV2(amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.W
 		txIn := wire.NewTxIn(outPoint, nil, nil)
 		redeemTx.AddTxIn(txIn)
 	}
-
-	// adding the destination address and the amount to
-	// the transaction as output
-	redeemTxOut := wire.NewTxOut(amount, destinationAddrByte)
-	redeemTx.AddTxOut(redeemTxOut)
-
-	// changeAddress, err := client.GetRawChangeAddress("default")
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-	// changePkScript, err := txscript.PayToAddrScript(changeAddress)
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-	// changeTxOut := wire.NewTxOut(20, changePkScript)
-	// redeemTx.AddTxOut(changeTxOut)
-
-	// now sign the transaction
-	finalRawTx, err := SignTx(wif, pkScript, redeemTx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return finalRawTx, wif, nil
-}
-
-func CreateTx(destination string, amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
-	defaultAddress, err := btcutil.DecodeAddress("SeTCfjeSQYevShUDEqo59GH1V5kqnP4dg5", &chaincfg.SimNetParams)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	wif, err := client.DumpPrivKey(defaultAddress)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	utxos, err := client.ListUnspent()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txid, vout, balance := GetUtxo(utxos, defaultAddress.EncodeAddress())
-	if len(txid) == 0 {
-		return nil, nil, fmt.Errorf("no utxos")
-	}
-
-	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// checking for sufficiency of account
-	if int64(balance) < amount {
-		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
-	}
-
-	// extracting destination address as []byte from function argument (destination string)
-	destinationAddr, err := btcutil.DecodeAddress(destination, &chaincfg.SimNetParams)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	destinationAddrByte, err := txscript.PayToAddrScript(destinationAddr)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	redeemTx, err := NewTx()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	utxoHash, err := chainhash.NewHashFromStr(txid)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	outPoint := wire.NewOutPoint(utxoHash, vout)
-
-	// making the input, and adding it to transaction
-	txIn := wire.NewTxIn(outPoint, nil, nil)
-	redeemTx.AddTxIn(txIn)
 
 	// adding the destination address and the amount to
 	// the transaction as output

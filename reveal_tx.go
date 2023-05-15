@@ -21,16 +21,16 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	builder := txscript.NewScriptBuilder()
 	builder.AddData(schnorr.SerializePubKey(pubKey))
 	builder.AddOp(txscript.OP_CHECKSIG)
-	builder.AddOp(txscript.OP_0)
-	builder.AddOp(txscript.OP_IF)
-	chunks := ChunkSlice(embeddedData, 520)
-	for _, chunk := range chunks {
-		builder.AddFullData(chunk)
-	}
+	// builder.AddOp(txscript.OP_FALSE)
+	// builder.AddOp(txscript.OP_IF)
+	// chunks := ChunkSlice(embeddedData, 520)
+	// for _, chunk := range chunks {
+	// 	builder.AddFullData(chunk)
+	// }
 
 	pkScript, err := builder.Script()
 	//append op endif to prevent checking 10k size limit
-	pkScript = append(pkScript, txscript.OP_ENDIF)
+	//pkScript = append(pkScript, txscript.OP_ENDIF)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
@@ -50,6 +50,11 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(
 		pubKey,
 	)
+
+	err = txscript.VerifyTaprootLeafCommitment(&ctrlBlock, schnorr.SerializePubKey(outputKey), pkScript)
+	if err != nil {
+		return nil, nil, fmt.Errorf("oh nooooooo")
+	}
 
 	tx := wire.NewMsgTx(2)
 	tx.AddTxIn(&wire.TxIn{
@@ -75,9 +80,9 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	)
 	sigHashes := txscript.NewTxSigHashes(tx, inputFetcher)
 
-	sig, err := txscript.RawTxInTapscriptSignature(
+	sig, err := txscript.RawTxInTaprootSignature(
 		tx, sigHashes, 0, txOut.Value,
-		txOut.PkScript, tapLeaf, txscript.SigHashDefault,
+		txOut.PkScript, tapScriptRootHash[:], txscript.SigHashDefault,
 		randPriv,
 	)
 
