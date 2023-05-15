@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+)
+
+const (
+	senderAddress = "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ"
 )
 
 func main() {
@@ -26,209 +30,130 @@ func main() {
 		return
 	}
 
-	rawTx, wif, err := CreateTxV2(10000, client)
+	senderAddressObj, err := btcutil.DecodeAddress(senderAddress, &chaincfg.SimNetParams)
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	hash, err := client.SendRawTransaction(rawTx, false)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("Success")
-
-	fundTx, err := client.GetRawTransaction(hash)
+	wif, err := client.DumpPrivKey(senderAddressObj)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	commitSignedTx, err := CommitTx(wif, fundTx, hash, 0)
+	firstTx, err := SendMoneyToTaprootAddress(10000, client, senderAddressObj)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	commitTxHash, err := client.SendRawTransaction(commitSignedTx, false)
+	hashFirstTx, err := client.SendRawTransaction(firstTx, false)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(commitTxHash)
 
-	// tx, _, err := RevealTx([]byte("Hello World"), *hash, *fundTx.MsgTx().TxOut[0], 0, wif.PrivKey)
+	fmt.Println("===================================Checkpoint 1====================================")
+
+	availableUtxos, err := client.GetRawTransaction(hashFirstTx)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = StartTapTree(client, wif, []byte("Hello World"), hashFirstTx, 0, availableUtxos.MsgTx().TxOut[0])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func MakeRandomKeyPair() (*btcutil.WIF, error) {
+	randPriv, err := btcec.NewPrivateKey()
+	if err != nil {
+		return nil, err
+	}
+	wif, err := btcutil.NewWIF(randPriv, &chaincfg.SimNetParams, true)
+	if err != nil {
+		return nil, err
+	}
+	return wif, nil
+}
+
+func StartTapTree(client *rpcclient.Client, keyPair *btcutil.WIF, data []byte, hash *chainhash.Hash, index uint32, commitOutput *wire.TxOut) error {
+	// tweakedPubKey, err := schnorr.ParsePubKey(schnorr.SerializePubKey(keyPair.PrivKey.PubKey()))
 	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
+	// 	return err
+	// }
+	// p2pktr, err := btcutil.NewAddressTaproot(tweakedPubKey.X().Bytes(), &chaincfg.SimNetParams)
+	// if err != nil {
+	// 	return err
 	// }
 
-	// revealTx, err := client.SendRawTransaction(tx, true)
+	hashLockKeypair, err := MakeRandomKeyPair()
+	if err != nil {
+		return err
+	}
+
+	builder := txscript.NewScriptBuilder()
+	builder.AddData(hashLockKeypair.PrivKey.PubKey().X().Bytes())
+	builder.AddOp(txscript.OP_CHECKSIG)
+	hashLockScript, err := builder.Script()
+	if err != nil {
+		return err
+	}
+
+	var allTreeLeaves []txscript.TapLeaf
+	tapLeaf := txscript.NewBaseTapLeaf(hashLockScript)
+	allTreeLeaves = append(allTreeLeaves, tapLeaf)
+	tapTree := TapscriptFullTree(keyPair.PrivKey.PubKey(), allTreeLeaves...)
+	taprootKey, err := tapTree.TaprootKey()
+	if err != nil {
+		return err
+	}
+	scriptAddr, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(taprootKey), &chaincfg.SimNetParams)
+	if err != nil {
+		return err
+	}
+
+	// p2pkP2tr, err := btcutil.NewAddressTaproot(keyPair.PrivKey.PubKey().X().Bytes(), &chaincfg.SimNetParams)
 	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
+	// 	return err
 	// }
-	// fmt.Println(revealTx)
-}
 
-func NewTx() (*wire.MsgTx, error) {
-	return wire.NewMsgTx(wire.TxVersion), nil
-}
-
-func GetUtxo(utxos []btcjson.ListUnspentResult, address string) (string, uint32, float64) {
-	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == address {
-			return utxos[i].TxID, utxos[i].Vout, utxos[i].Amount
-		}
-	}
-	return "", 0, -1
-}
-
-type MyUtxo struct {
-	TxID   string
-	Vout   uint32
-	Amount float64
-}
-
-func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float64) []*MyUtxo {
-	var myUtxos []*MyUtxo
-	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == address {
-			myUtxos = append(myUtxos, &MyUtxo{
-				TxID:   utxos[i].TxID,
-				Vout:   utxos[i].Vout,
-				Amount: utxos[i].Amount,
-			})
-		}
-	}
-	var res []*MyUtxo
-	//sort.Slice(myUtxos, func(i, j int) bool {
-	//	return myUtxos[i].Amount < myUtxos[j].Amount
-	//})
-	for _, utxo := range myUtxos {
-		res = append(res, utxo)
-		amount -= utxo.Amount
-		if amount <= 0 {
-			break
-		}
-	}
-
-	return res
-}
-
-func GetActualBalance(client *rpcclient.Client, actualAddress string) (int, error) {
-	utxos, err := client.ListUnspent()
+	//Commit transaction
+	commitTx, err := NewTx()
 	if err != nil {
-		return -1, err
+		return err
 	}
+	commitTx.AddTxIn(&wire.TxIn{
+		PreviousOutPoint: *wire.NewOutPoint(hash, index),
+	})
+	scriptAddrScript, _ := txscript.PayToAddrScript(scriptAddr)
+	commitTx.AddTxOut(&wire.TxOut{
+		Value:    commitOutput.Value * 80 / 100,
+		PkScript: scriptAddrScript,
+	})
 
-	amount := 0
+	inputFetcher := txscript.NewCannedPrevOutputFetcher(scriptAddrScript, commitOutput.Value*80/100)
+	sigHashes := txscript.NewTxSigHashes(commitTx, inputFetcher)
 
-	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == actualAddress {
-			amount += int(utxos[i].Amount)
-		}
-	}
-	return amount, nil
-}
-
-func CreateTxV2(amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
-	senderAddress := "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ"
-
-	//actualBalance, _ := GetActualBalance(client, senderAddress)
-
-	defaultAddress, err := btcutil.DecodeAddress(senderAddress, &chaincfg.SimNetParams)
+	sig, err := txscript.RawTxInTapscriptSignature(commitTx, sigHashes, 0, commitOutput.Value*80/100, scriptAddrScript, tapLeaf, txscript.SigHashDefault, keyPair.PrivKey)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	wif, err := client.DumpPrivKey(defaultAddress)
+	controlBlock, err := tapTree.ControlBlock.ToBytes()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
+	commitTx.TxIn[0].Witness = wire.TxWitness{sig, hashLockScript, controlBlock}
 
-	utxos, err := client.ListUnspent()
+	finalHash, err := client.SendRawTransaction(commitTx, false)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
-
-	sendUtxos := GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
-	if len(sendUtxos) == 0 {
-		return nil, nil, fmt.Errorf("no utxos")
-	}
-
-	//PrintLogUtxos(sendUtxos)
-
-	var balance float64
-	for _, item := range sendUtxos {
-		balance += item.Amount
-	}
-
-	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// checking for sufficiency of account
-	if int64(balance) < amount {
-		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
-	}
-
-	// extracting destination address as []byte from function argument (destination string)
-	tapKey := txscript.ComputeTaprootKeyNoScript(wif.PrivKey.PubKey())
-	destinationAddr, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(tapKey), &chaincfg.SimNetParams)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	destinationAddrByte, err := txscript.PayToAddrScript(destinationAddr)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	redeemTx, err := NewTx()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, utxo := range sendUtxos {
-		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		outPoint := wire.NewOutPoint(utxoHash, utxo.Vout)
-
-		// making the input, and adding it to transaction
-		txIn := wire.NewTxIn(outPoint, nil, nil)
-		redeemTx.AddTxIn(txIn)
-	}
-
-	// adding the destination address and the amount to
-	// the transaction as output
-	redeemTxOut := wire.NewTxOut(amount, destinationAddrByte)
-	redeemTx.AddTxOut(redeemTxOut)
-
-	// now sign the transaction
-	finalRawTx, err := SignTx(wif, pkScript, redeemTx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return finalRawTx, wif, nil
-}
-
-func SignTx(wif *btcutil.WIF, pkScript []byte, redeemTx *wire.MsgTx) (*wire.MsgTx, error) {
-	for i, _ := range redeemTx.TxIn {
-		signature, err := txscript.SignatureScript(redeemTx, i, pkScript, txscript.SigHashAll, wif.PrivKey, true)
-		if err != nil {
-			return nil, err
-		}
-
-		redeemTx.TxIn[i].SignatureScript = signature
-	}
-	return redeemTx, nil
+	fmt.Println(finalHash)
+	return nil
 }
