@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bitcoin_nft_v2/utils"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -17,7 +18,7 @@ func CreateTaprootCommitTransaction(embeddedData []byte, previousHash *chainhash
 	builder.AddOp(txscript.OP_CHECKSIG)
 	builder.AddOp(txscript.OP_0)
 	builder.AddOp(txscript.OP_IF)
-	chunks := ChunkSlice(embeddedData, 520)
+	chunks := utils.ChunkSlice(embeddedData, 520)
 	for _, chunk := range chunks {
 		builder.AddFullData(chunk)
 	}

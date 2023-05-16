@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bitcoin_nft_v2/utils"
 	"fmt"
 
 	"github.com/btcsuite/btcd/chaincfg"
 )
 
 func main() {
-	client, err := GetBitcoinWalletRpcClient("btcwallet", TestNetConfig)
+	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", TestNetConfig)
 	if err != nil {
 		fmt.Println(err)
 		return

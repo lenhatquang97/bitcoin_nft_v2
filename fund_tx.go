@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bitcoin_nft_v2/config"
+	"bitcoin_nft_v2/utils"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -11,7 +13,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, networkConfig *NetworkConfig) (*wire.MsgTx, *btcutil.WIF, error) {
+func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, networkConfig *config.NetworkConfig) (*wire.MsgTx, *btcutil.WIF, error) {
 	defaultAddress, err := btcutil.DecodeAddress(networkConfig.SenderAddress, networkConfig.ParamsObject)
 	if err != nil {
 		return nil, nil, err
@@ -27,7 +29,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, err
 	}
 
-	sendUtxos := GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
+	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
 	if len(sendUtxos) == 0 {
 		return nil, nil, fmt.Errorf("no utxos")
 	}
@@ -56,7 +58,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	builder.AddOp(txscript.OP_CHECKSIG)
 	builder.AddOp(txscript.OP_0)
 	builder.AddOp(txscript.OP_IF)
-	chunks := ChunkSlice(embeddedData, 520)
+	chunks := utils.ChunkSlice(embeddedData, 520)
 	for _, chunk := range chunks {
 		builder.AddFullData(chunk)
 	}
@@ -78,7 +80,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
 	outputScript, _ := outputScriptBuilder.Script()
 
-	redeemTx, err := NewTx()
+	redeemTx, err := utils.NewTx()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -102,7 +104,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	redeemTx.AddTxOut(redeemTxOut)
 
 	// now sign the transaction
-	finalRawTx, err := SignTx(wif, pkScript, redeemTx)
+	finalRawTx, err := utils.SignTx(wif, pkScript, redeemTx)
 	if err != nil {
 		return nil, nil, err
 	}

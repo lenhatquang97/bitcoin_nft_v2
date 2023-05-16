@@ -1,17 +1,10 @@
 package main
 
-import "github.com/btcsuite/btcd/chaincfg"
+import (
+	"bitcoin_nft_v2/config"
 
-type NetworkConfig struct {
-	Host          string
-	Endpoint      string
-	User          string
-	Pass          string
-	CertName      string
-	Params        string
-	ParamsObject  *chaincfg.Params
-	SenderAddress string
-}
+	"github.com/btcsuite/btcd/chaincfg"
+)
 
 const (
 	PassphraseInWallet = "12345"
@@ -21,7 +14,7 @@ const (
 )
 
 var EmbeddedData = []byte("Hello World")
-var SimNetConfig = NetworkConfig{
+var SimNetConfig = config.NetworkConfig{
 	Host:          "localhost:18554",
 	Endpoint:      "ws",
 	User:          "youruser",
@@ -31,7 +24,7 @@ var SimNetConfig = NetworkConfig{
 	SenderAddress: "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ",
 }
 
-var TestNetConfig = NetworkConfig{
+var TestNetConfig = config.NetworkConfig{
 	Host:          "localhost:18332",
 	Endpoint:      "ws",
 	User:          "4bmeiF7E3ny8cGf8Ok6QJZy/0pk=",

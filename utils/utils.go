@@ -1,6 +1,7 @@
-package main
+package utils
 
 import (
+	"bitcoin_nft_v2/config"
 	"io/ioutil"
 	"path/filepath"
 
@@ -32,7 +33,7 @@ func LoadCerts(baseFolder string) ([]byte, error) {
 	return certs, nil
 }
 
-func GetBitcoinWalletRpcClient(certName string, networkConfig NetworkConfig) (*rpcclient.Client, error) {
+func GetBitcoinWalletRpcClient(certName string, networkConfig config.NetworkConfig) (*rpcclient.Client, error) {
 	certs, _ := LoadCerts(certName)
 	client, err := rpcclient.New(&rpcclient.ConnConfig{
 		Host:         networkConfig.Host,
