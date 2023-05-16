@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	client, err := GetBitcoinWalletRpcClient("btcwallet", SimNetConfig)
+	client, err := GetBitcoinWalletRpcClient("btcwallet", TestNetConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -19,7 +19,7 @@ func main() {
 		return
 	}
 
-	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &chaincfg.SimNetParams)
+	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &TestNetConfig)
 	if err != nil {
 		fmt.Println(err)
 		return

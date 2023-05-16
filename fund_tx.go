@@ -5,15 +5,14 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
 
-func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, params *chaincfg.Params) (*wire.MsgTx, *btcutil.WIF, error) {
-	defaultAddress, err := btcutil.DecodeAddress(SenderAddress, params)
+func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, networkConfig *NetworkConfig) (*wire.MsgTx, *btcutil.WIF, error) {
+	defaultAddress, err := btcutil.DecodeAddress(networkConfig.SenderAddress, networkConfig.ParamsObject)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -47,7 +46,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	// checking for sufficiency of account
-	if int64(balance) < amount {
+	if int64(balance*float64(TESTNET_1_BTC)) < amount {
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	}
 
