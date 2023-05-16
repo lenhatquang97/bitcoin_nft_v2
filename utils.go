@@ -4,9 +4,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 )
@@ -34,30 +32,18 @@ func LoadCerts(baseFolder string) ([]byte, error) {
 	return certs, nil
 }
 
-func GetBitcoinWalletRpcClient() (*rpcclient.Client, error) {
-	certs, _ := LoadCerts("btcwallet")
+func GetBitcoinWalletRpcClient(certName string, networkConfig NetworkConfig) (*rpcclient.Client, error) {
+	certs, _ := LoadCerts(certName)
 	client, err := rpcclient.New(&rpcclient.ConnConfig{
-		Host:         "localhost:18554",
-		Endpoint:     "ws",
-		User:         "youruser",
-		Pass:         "SomeDecentp4ssw0rd",
+		Host:         networkConfig.Host,
+		Endpoint:     networkConfig.Endpoint,
+		User:         networkConfig.User,
+		Pass:         networkConfig.Pass,
+		Params:       networkConfig.Params,
 		Certificates: certs,
-		Params:       "simnet",
 	}, nil)
 	if err != nil {
 		return nil, err
 	}
 	return client, nil
-}
-
-func MakeRandomKeyPair() (*btcutil.WIF, error) {
-	randPriv, err := btcec.NewPrivateKey()
-	if err != nil {
-		return nil, err
-	}
-	wif, err := btcutil.NewWIF(randPriv, &chaincfg.SimNetParams, true)
-	if err != nil {
-		return nil, err
-	}
-	return wif, nil
 }

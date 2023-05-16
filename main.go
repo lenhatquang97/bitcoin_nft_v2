@@ -2,39 +2,36 @@ package main
 
 import (
 	"fmt"
-)
 
-const (
-	senderAddress = "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ"
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 func main() {
-	embeddedData := []byte("Hello World")
-	client, err := GetBitcoinWalletRpcClient()
+	client, err := GetBitcoinWalletRpcClient("btcwallet", SimNetConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = client.WalletPassphrase("12345", 5)
+	err = client.WalletPassphrase(PassphraseInWallet, PassphraseTimeout)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	tx, wif, err := CreateFundTx(10000, client, embeddedData)
+	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &chaincfg.SimNetParams)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	commitTxHash, err := client.SendRawTransaction(tx, false)
+	commitTxHash, err := client.SendRawTransaction(commitTx, false)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	commitTx, err := client.GetRawTransaction(commitTxHash)
+	retrievedCommitTx, err := client.GetRawTransaction(commitTxHash)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -42,22 +39,23 @@ func main() {
 
 	fmt.Println("===================================Checkpoint 1====================================")
 
-	finalTx, _, err := RevealTx(embeddedData, *commitTxHash, *commitTx.MsgTx().TxOut[0], 0, wif.PrivKey)
+	revealTx, _, err := RevealTx(EmbeddedData, *commitTxHash, *retrievedCommitTx.MsgTx().TxOut[0], 0, wif.PrivKey, &chaincfg.SimNetParams)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	finalHash, err := client.SendRawTransaction(finalTx, false)
+	revealTxHash, err := client.SendRawTransaction(revealTx, false)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(finalHash)
+
+	fmt.Println(revealTxHash)
 
 	fmt.Println("===================================Checkpoint 2====================================")
 
-	retrievedTx, err := client.GetRawTransaction(finalHash)
+	retrievedTx, err := client.GetRawTransaction(revealTxHash)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -67,4 +65,7 @@ func main() {
 			fmt.Println(witnessItem)
 		}
 	}
+
+	fmt.Println("===================================Success====================================")
+
 }

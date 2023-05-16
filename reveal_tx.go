@@ -12,7 +12,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey) (*wire.MsgTx, *btcutil.AddressTaproot, error) {
+func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params) (*wire.MsgTx, *btcutil.AddressTaproot, error) {
 	pubKey := randPriv.PubKey()
 
 	builder := txscript.NewScriptBuilder()
@@ -24,10 +24,8 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	for _, chunk := range chunks {
 		builder.AddFullData(chunk)
 	}
-	builder.AddOp(txscript.OP_ENDIF)
 	pkScript, err := builder.Script()
-	//append op endif to prevent checking 10k size limit
-	//pkScript = append(pkScript, txscript.OP_ENDIF)
+	pkScript = append(pkScript, txscript.OP_ENDIF)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
@@ -45,7 +43,7 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
 	outputScript, _ := outputScriptBuilder.Script()
 
-	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), &chaincfg.SimNetParams)
+	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), params)
 	if err != nil {
 		return nil, nil, err
 	}

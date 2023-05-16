@@ -12,8 +12,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func CreateFundTx(amount int64, client *rpcclient.Client, embeddedData []byte) (*wire.MsgTx, *btcutil.WIF, error) {
-	defaultAddress, err := btcutil.DecodeAddress(senderAddress, &chaincfg.SimNetParams)
+func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, params *chaincfg.Params) (*wire.MsgTx, *btcutil.WIF, error) {
+	defaultAddress, err := btcutil.DecodeAddress(SenderAddress, params)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -61,8 +61,8 @@ func CreateFundTx(amount int64, client *rpcclient.Client, embeddedData []byte) (
 	for _, chunk := range chunks {
 		builder.AddFullData(chunk)
 	}
-	builder.AddOp(txscript.OP_ENDIF)
 	hashLockScript, err := builder.Script()
+	hashLockScript = append(hashLockScript, txscript.OP_ENDIF)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
