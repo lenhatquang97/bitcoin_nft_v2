@@ -56,4 +56,15 @@ func main() {
 	fmt.Println(finalHash)
 
 	fmt.Println("===================================Checkpoint 2====================================")
+
+	retrievedTx, err := client.GetRawTransaction(finalHash)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, item := range retrievedTx.MsgTx().TxIn {
+		for _, witnessItem := range item.Witness {
+			fmt.Println(witnessItem)
+		}
+	}
 }
