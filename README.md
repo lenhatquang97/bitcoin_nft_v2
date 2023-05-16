@@ -22,10 +22,14 @@ btcctl --simnet --wallet --rpcuser=youruser --rpcpass=SomeDecentp4ssw0rd generat
 > Note: You need to set wallet passphrase to be 12345.
 
 ### Run btcd in testnet
+```
 btcd --testnet -u 4bmeiF7E3ny8cGf8Ok6QJZy/0pk= -P 2oljjSoRFzC5Go7hCGDID6xWi+c=
-
+```
 ### Run btcwallet in testnet
+```
 btcwallet --testnet --rpcconnect=localhost:8334 -u 4bmeiF7E3ny8cGf8Ok6QJZy/0pk= -P 2oljjSoRFzC5Go7hCGDID6xWi+c=
-
+```
 ### Get default address account
+```
 btcctl --testnet --wallet --rpcuser="4bmeiF7E3ny8cGf8Ok6QJZy/0pk=" --rpcpass="2oljjSoRFzC5Go7hCGDID6xWi+c=" getaccountaddress default
+```
