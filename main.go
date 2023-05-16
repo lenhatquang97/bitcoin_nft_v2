@@ -30,25 +30,19 @@ func main() {
 		return
 	}
 
-	senderAddressObj, err := btcutil.DecodeAddress(senderAddress, &chaincfg.SimNetParams)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	wif, err := client.DumpPrivKey(senderAddressObj)
+	tx, wif, err := CreateTxV2(10000, client)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	firstTx, err := SendMoneyToTaprootAddress(10000, client, senderAddressObj)
+	hashTx, err := client.SendRawTransaction(tx, false)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	hashFirstTx, err := client.SendRawTransaction(firstTx, false)
+	rawTx, err := client.GetRawTransaction(hashTx)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -56,17 +50,19 @@ func main() {
 
 	fmt.Println("===================================Checkpoint 1====================================")
 
-	availableUtxos, err := client.GetRawTransaction(hashFirstTx)
+	finalTx, _, err := RevealTx([]byte("Hello World"), *hashTx, *rawTx.MsgTx().TxOut[0], 0, wif.PrivKey)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = StartTapTree(client, wif, []byte("Hello World"), hashFirstTx, 0, availableUtxos.MsgTx().TxOut[0])
+	finalHash, err := client.SendRawTransaction(finalTx, false)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println(finalHash)
+
 }
 
 func MakeRandomKeyPair() (*btcutil.WIF, error) {
@@ -81,79 +77,88 @@ func MakeRandomKeyPair() (*btcutil.WIF, error) {
 	return wif, nil
 }
 
-func StartTapTree(client *rpcclient.Client, keyPair *btcutil.WIF, data []byte, hash *chainhash.Hash, index uint32, commitOutput *wire.TxOut) error {
-	// tweakedPubKey, err := schnorr.ParsePubKey(schnorr.SerializePubKey(keyPair.PrivKey.PubKey()))
-	// if err != nil {
-	// 	return err
-	// }
-	// p2pktr, err := btcutil.NewAddressTaproot(tweakedPubKey.X().Bytes(), &chaincfg.SimNetParams)
-	// if err != nil {
-	// 	return err
-	// }
-
-	hashLockKeypair, err := MakeRandomKeyPair()
+func CreateTxV2(amount int64, client *rpcclient.Client) (*wire.MsgTx, *btcutil.WIF, error) {
+	defaultAddress, err := btcutil.DecodeAddress(senderAddress, &chaincfg.SimNetParams)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	builder := txscript.NewScriptBuilder()
-	builder.AddData(hashLockKeypair.PrivKey.PubKey().X().Bytes())
-	builder.AddOp(txscript.OP_CHECKSIG)
-	hashLockScript, err := builder.Script()
+	wif, err := client.DumpPrivKey(defaultAddress)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	var allTreeLeaves []txscript.TapLeaf
-	tapLeaf := txscript.NewBaseTapLeaf(hashLockScript)
-	allTreeLeaves = append(allTreeLeaves, tapLeaf)
-	tapTree := TapscriptFullTree(keyPair.PrivKey.PubKey(), allTreeLeaves...)
-	taprootKey, err := tapTree.TaprootKey()
+	utxos, err := client.ListUnspent()
 	if err != nil {
-		return err
-	}
-	scriptAddr, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(taprootKey), &chaincfg.SimNetParams)
-	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// p2pkP2tr, err := btcutil.NewAddressTaproot(keyPair.PrivKey.PubKey().X().Bytes(), &chaincfg.SimNetParams)
-	// if err != nil {
-	// 	return err
-	// }
-
-	//Commit transaction
-	commitTx, err := NewTx()
-	if err != nil {
-		return err
-	}
-	commitTx.AddTxIn(&wire.TxIn{
-		PreviousOutPoint: *wire.NewOutPoint(hash, index),
-	})
-	scriptAddrScript, _ := txscript.PayToAddrScript(scriptAddr)
-	commitTx.AddTxOut(&wire.TxOut{
-		Value:    commitOutput.Value * 80 / 100,
-		PkScript: scriptAddrScript,
-	})
-
-	inputFetcher := txscript.NewCannedPrevOutputFetcher(scriptAddrScript, commitOutput.Value*80/100)
-	sigHashes := txscript.NewTxSigHashes(commitTx, inputFetcher)
-
-	sig, err := txscript.RawTxInTapscriptSignature(commitTx, sigHashes, 0, commitOutput.Value*80/100, scriptAddrScript, tapLeaf, txscript.SigHashDefault, keyPair.PrivKey)
-	if err != nil {
-		return err
+	sendUtxos := GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
+	if len(sendUtxos) == 0 {
+		return nil, nil, fmt.Errorf("no utxos")
 	}
 
-	controlBlock, err := tapTree.ControlBlock.ToBytes()
-	if err != nil {
-		return err
-	}
-	commitTx.TxIn[0].Witness = wire.TxWitness{sig, hashLockScript, controlBlock}
+	//PrintLogUtxos(sendUtxos)
 
-	finalHash, err := client.SendRawTransaction(commitTx, false)
-	if err != nil {
-		return err
+	var balance float64
+	for _, item := range sendUtxos {
+		balance += item.Amount
 	}
-	fmt.Println(finalHash)
-	return nil
+
+	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// checking for sufficiency of account
+	if int64(balance) < amount {
+		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
+	}
+
+	// extracting destination address as []byte from function argument (destination string)
+	tweakedPubKey, err := schnorr.ParsePubKey(schnorr.SerializePubKey(wif.PrivKey.PubKey()))
+	if err != nil {
+		return nil, nil, err
+	}
+	destinationAddr, err := btcutil.NewAddressTaproot(tweakedPubKey.X().Bytes(), &chaincfg.SimNetParams)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	destinationAddrByte, err := txscript.PayToAddrScript(destinationAddr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	redeemTx, err := NewTx()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, utxo := range sendUtxos {
+		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		outPoint := wire.NewOutPoint(utxoHash, utxo.Vout)
+
+		// making the input, and adding it to transaction
+		txIn := wire.NewTxIn(outPoint, nil, nil)
+		redeemTx.AddTxIn(txIn)
+	}
+
+	// adding the destination address and the amount to
+	// the transaction as output
+	redeemTxOut := wire.NewTxOut(amount, destinationAddrByte)
+	redeemTx.AddTxOut(redeemTxOut)
+
+	// now sign the transaction
+	finalRawTx, err := SignTx(wif, pkScript, redeemTx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return finalRawTx, wif, nil
 }
