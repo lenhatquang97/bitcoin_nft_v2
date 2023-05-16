@@ -24,10 +24,10 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	for _, chunk := range chunks {
 		builder.AddFullData(chunk)
 	}
-
+	builder.AddOp(txscript.OP_ENDIF)
 	pkScript, err := builder.Script()
 	//append op endif to prevent checking 10k size limit
-	pkScript = append(pkScript, txscript.OP_ENDIF)
+	//pkScript = append(pkScript, txscript.OP_ENDIF)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
@@ -35,10 +35,16 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 
 	tapLeaf := txscript.NewBaseTapLeaf(pkScript)
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
-	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
+	tapScriptRootHash := tapScriptTree.LeafMerkleProofs[0].RootNode.TapHash()
 	outputKey := txscript.ComputeTaprootOutputKey(
 		pubKey, tapScriptRootHash[:],
 	)
+
+	outputScriptBuilder := txscript.NewScriptBuilder()
+	outputScriptBuilder.AddOp(txscript.OP_1)
+	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
+	outputScript, _ := outputScriptBuilder.Script()
+
 	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), &chaincfg.SimNetParams)
 	if err != nil {
 		return nil, nil, err
@@ -90,11 +96,14 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		sig, pkScript, ctrlBlockBytes,
 	}
 
-	engine, err := txscript.NewEngine(pkScript, tx, 0, txscript.StandardVerifyFlags, nil, sigHashes, 1000, inputFetcher)
+	engine, err := txscript.NewEngine(outputScript, tx, 0, txscript.StandardVerifyFlags, nil, sigHashes, 8000, inputFetcher)
 	if err != nil {
 		return nil, nil, err
 	}
-	engine.Execute()
-
+	err = engine.Execute()
+	if err != nil {
+		return nil, nil, err
+	}
+	fmt.Println("===================================Success validation====================================")
 	return tx, address, nil
 }

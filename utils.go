@@ -4,7 +4,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/rpcclient"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 )
@@ -46,4 +48,16 @@ func GetBitcoinWalletRpcClient() (*rpcclient.Client, error) {
 		return nil, err
 	}
 	return client, nil
+}
+
+func MakeRandomKeyPair() (*btcutil.WIF, error) {
+	randPriv, err := btcec.NewPrivateKey()
+	if err != nil {
+		return nil, err
+	}
+	wif, err := btcutil.NewWIF(randPriv, &chaincfg.SimNetParams, true)
+	if err != nil {
+		return nil, err
+	}
+	return wif, nil
 }
