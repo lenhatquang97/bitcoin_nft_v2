@@ -4,7 +4,11 @@ import (
 	"bitcoin_nft_v2/utils"
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcd/wire"
 )
 
 func main() {
@@ -19,17 +23,11 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("===================================Checkpoint 0====================================")
 
-	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &TestNetConfig)
+	commitTxHash, wif, err := ExecuteCommitTransaction(client)
 	if err != nil {
 		fmt.Println(err)
-		return
-	}
-
-	commitTxHash, err := client.SendRawTransaction(commitTx, false)
-	if err != nil {
-		fmt.Println(err)
-		return
 	}
 
 	retrievedCommitTx, err := client.GetRawTransaction(commitTxHash)
@@ -40,22 +38,43 @@ func main() {
 
 	fmt.Println("===================================Checkpoint 1====================================")
 
-	revealTx, _, err := RevealTx(EmbeddedData, *commitTxHash, *retrievedCommitTx.MsgTx().TxOut[0], 0, wif.PrivKey, &chaincfg.SimNetParams)
+	revealTxHash, err := ExecuteRevealTransaction(client, commitTxHash, 0, wif, retrievedCommitTx.MsgTx().TxOut[0], TestNetConfig.ParamsObject)
 	if err != nil {
 		fmt.Println(err)
 		return
+	}
+	fmt.Println("===================================Checkpoint 2====================================")
+	IterateWitness(client, revealTxHash)
+	fmt.Println("===================================Success====================================")
+
+}
+
+func ExecuteCommitTransaction(client *rpcclient.Client) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &TestNetConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	commitTxHash, err := client.SendRawTransaction(commitTx, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	return commitTxHash, wif, nil
+}
+func ExecuteRevealTransaction(client *rpcclient.Client, commitTxHash *chainhash.Hash, idx uint32, wif *btcutil.WIF, commitOutput *wire.TxOut, config *chaincfg.Params) (*chainhash.Hash, error) {
+	revealTx, _, err := RevealTx(EmbeddedData, *commitTxHash, *commitOutput, idx, wif.PrivKey, config)
+	if err != nil {
+		return nil, err
 	}
 
 	revealTxHash, err := client.SendRawTransaction(revealTx, false)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return nil, err
 	}
+	return revealTxHash, nil
+}
 
-	fmt.Println(revealTxHash)
-
-	fmt.Println("===================================Checkpoint 2====================================")
-
+func IterateWitness(client *rpcclient.Client, revealTxHash *chainhash.Hash) {
 	retrievedTx, err := client.GetRawTransaction(revealTxHash)
 	if err != nil {
 		fmt.Println(err)
@@ -66,7 +85,4 @@ func main() {
 			fmt.Println(witnessItem)
 		}
 	}
-
-	fmt.Println("===================================Success====================================")
-
 }
