@@ -10,6 +10,7 @@ const (
 	PassphraseInWallet = "12345"
 	PassphraseTimeout  = 3
 	CoinsToSend        = 10000
+	DefaultFee         = 1000
 	TESTNET_1_BTC      = 100000000
 )
 
@@ -25,11 +26,14 @@ var SimNetConfig = config.NetworkConfig{
 }
 
 var TestNetConfig = config.NetworkConfig{
-	Host:          "localhost:18332",
-	Endpoint:      "ws",
-	User:          "4bmeiF7E3ny8cGf8Ok6QJZy/0pk=",
-	Pass:          "2oljjSoRFzC5Go7hCGDID6xWi+c=",
-	Params:        "testnet3",
-	ParamsObject:  &chaincfg.TestNet3Params,
-	SenderAddress: "mzcH9PSuCUaB4JShJNUGEqJrtAGV1wNQiB",
+	Host:         "localhost:18332",
+	Endpoint:     "ws",
+	User:         "4bmeiF7E3ny8cGf8Ok6QJZy/0pk=",
+	Pass:         "2oljjSoRFzC5Go7hCGDID6xWi+c=",
+	Params:       "testnet3",
+	ParamsObject: &chaincfg.TestNet3Params,
+	//Note: in testnet, address is not reused so you need to use default address
+	//Another note: Default address has changed everytime you init the server => In UI, you need a mechanism to
+	//choose address anyway.
+	SenderAddress: "n1Nd8J38uyDRLwh5ShAAPvbNrqBD1wee8v",
 }

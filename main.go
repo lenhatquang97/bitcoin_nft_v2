@@ -44,6 +44,7 @@ func main() {
 		return
 	}
 	fmt.Println("===================================Checkpoint 2====================================")
+	fmt.Println(revealTxHash)
 	IterateWitness(client, revealTxHash)
 	fmt.Println("===================================Success====================================")
 
