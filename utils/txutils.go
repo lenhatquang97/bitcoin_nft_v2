@@ -3,8 +3,6 @@ package utils
 import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -46,19 +44,4 @@ func CreateOutputKeyBasedOnScript(pubKey *secp256k1.PublicKey, script []byte) (*
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
 	tapScriptRootHash := tapScriptTree.LeafMerkleProofs[0].RootNode.TapHash()
 	return txscript.ComputeTaprootOutputKey(pubKey, tapScriptRootHash[:]), tapScriptTree, &tapLeaf
-}
-
-func GetDefaultAddress(client *rpcclient.Client, senderAddress string, config *chaincfg.Params) (btcutil.Address, error) {
-	if len(senderAddress) == 0 {
-		testNetAddress, err := client.GetAccountAddress("default")
-		if err != nil {
-			return nil, err
-		}
-		return testNetAddress, nil
-	}
-	simNetAddress, err := btcutil.DecodeAddress(senderAddress, config)
-	if err != nil {
-		return nil, err
-	}
-	return simNetAddress, nil
 }

@@ -1,7 +1,13 @@
 package witnessbtc
 
 import (
+	"bitcoin_nft_v2/utils"
+
 	"github.com/btcsuite/btcd/txscript"
+)
+
+const (
+	CONTENT_TAG = "m25"
 )
 
 func GetPaddingInAddData(data []byte) int {
@@ -25,26 +31,6 @@ func GetPaddingInAddData(data []byte) int {
 	}
 }
 
-func FindMultiplePartsOfByteArray(part []byte, array []byte) []int {
-	m := len(part)
-	n := len(array)
-
-	result := make([]int, 0)
-
-	for i := 0; i <= n-m; i++ {
-		var j = 0
-		for j = 0; j < m; j++ {
-			if array[i+j] != part[j] {
-				break
-			}
-		}
-		if j == m {
-			result = append(result, i)
-		}
-	}
-	return result
-}
-
 func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 	fixedBytes := []byte{txscript.OP_CHECKSIG, txscript.OP_0, txscript.OP_IF}
 	validPosition := -1
@@ -56,16 +42,16 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 	}
 	var body = make([]byte, 0)
 	if validPosition != -1 {
-		multipleIndexes := FindMultiplePartsOfByteArray([]byte("m25"), embeddedData)
+		multipleIndexes := utils.FindMultiplePartsOfByteArray([]byte(CONTENT_TAG), embeddedData)
 		for i := 0; i < len(multipleIndexes)-1; i++ {
-			startChunkWithPadding := multipleIndexes[i] + len([]byte("m25"))
-			endChunk := multipleIndexes[i+1] - GetPaddingInAddData([]byte("m25"))
+			startChunkWithPadding := multipleIndexes[i] + len([]byte(CONTENT_TAG))
+			endChunk := multipleIndexes[i+1] - GetPaddingInAddData([]byte(CONTENT_TAG))
 			padding := GetPaddingInAddData(embeddedData[startChunkWithPadding:endChunk])
 			actualStartChunk := startChunkWithPadding + padding
 			actualEndChunk := endChunk
 			body = append(body, embeddedData[actualStartChunk:actualEndChunk]...)
 		}
-		startChunkWithPadding := multipleIndexes[len(multipleIndexes)-1] + len([]byte("m25"))
+		startChunkWithPadding := multipleIndexes[len(multipleIndexes)-1] + len([]byte(CONTENT_TAG))
 		endChunk := len(embeddedData) - 1
 		padding := GetPaddingInAddData(embeddedData[startChunkWithPadding:endChunk])
 

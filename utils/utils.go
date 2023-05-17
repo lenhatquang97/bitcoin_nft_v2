@@ -1,12 +1,10 @@
 package utils
 
 import (
-	"bitcoin_nft_v2/config"
 	"io/ioutil"
 	"path/filepath"
 
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/rpcclient"
 	_ "github.com/btcsuite/btcwallet/walletdb/bdb"
 )
 
@@ -33,18 +31,22 @@ func LoadCerts(baseFolder string) ([]byte, error) {
 	return certs, nil
 }
 
-func GetBitcoinWalletRpcClient(certName string, networkConfig config.NetworkConfig) (*rpcclient.Client, error) {
-	certs, _ := LoadCerts(certName)
-	client, err := rpcclient.New(&rpcclient.ConnConfig{
-		Host:         networkConfig.Host,
-		Endpoint:     networkConfig.Endpoint,
-		User:         networkConfig.User,
-		Pass:         networkConfig.Pass,
-		Params:       networkConfig.Params,
-		Certificates: certs,
-	}, nil)
-	if err != nil {
-		return nil, err
+func FindMultiplePartsOfByteArray(part []byte, array []byte) []int {
+	m := len(part)
+	n := len(array)
+
+	result := make([]int, 0)
+
+	for i := 0; i <= n-m; i++ {
+		var j = 0
+		for j = 0; j < m; j++ {
+			if array[i+j] != part[j] {
+				break
+			}
+		}
+		if j == m {
+			result = append(result, i)
+		}
 	}
-	return client, nil
+	return result
 }
