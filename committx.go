@@ -7,30 +7,14 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
 
-func GetDefaultAddress(client *rpcclient.Client, senderAddress string, config *chaincfg.Params) (btcutil.Address, error) {
-	if len(senderAddress) == 0 {
-		testNetAddress, err := client.GetAccountAddress("default")
-		if err != nil {
-			return nil, err
-		}
-		return testNetAddress, nil
-	}
-	simNetAddress, err := btcutil.DecodeAddress(senderAddress, config)
-	if err != nil {
-		return nil, err
-	}
-	return simNetAddress, nil
-}
-
 func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, networkConfig *config.NetworkConfig) (*wire.MsgTx, *btcutil.WIF, error) {
-	defaultAddress, err := GetDefaultAddress(client, networkConfig.SenderAddress, networkConfig.ParamsObject)
+	defaultAddress, err := utils.GetDefaultAddress(client, networkConfig.SenderAddress, networkConfig.ParamsObject)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -115,4 +99,17 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	return finalRawTx, wif, nil
+}
+
+func ExecuteCommitTransaction(client *rpcclient.Client) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &TestNetConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	commitTxHash, err := client.SendRawTransaction(commitTx, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	return commitTxHash, wif, nil
 }
