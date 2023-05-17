@@ -61,29 +61,34 @@ func FindMultiplePartsOfByteArray(part []byte, array []byte) []int {
 	return result
 }
 
-func ReadFile(filePath string) ([]byte, error) {
+func ReadFile(filePath string) ([]byte, string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer file.Close()
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	fileSize := fileInfo.Size()
 	if fileSize >= 3*1024*1024 {
-		return nil, fmt.Errorf("too much %d bytes for embedding NFT data", fileSize)
+		return nil, "", fmt.Errorf("too much %d bytes for embedding NFT data", fileSize)
 	}
 
 	binFile, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return binFile, nil
+	contentType, err := GetFileContentType(file)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return binFile, contentType, nil
 }
 
 func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {

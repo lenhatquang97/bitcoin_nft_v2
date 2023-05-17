@@ -10,8 +10,9 @@ const (
 	PassphraseInWallet = "12345"
 	PassphraseTimeout  = 3
 	CoinsToSend        = 10000
-	DefaultFee         = 1000
-	TESTNET_1_BTC      = 100000000
+	//100k means sending file, so I need to create a mechanism of sending file
+	DefaultFee    = 1000
+	TESTNET_1_BTC = 100000000
 )
 
 var EmbeddedData = []byte("Hello World")
@@ -35,5 +36,5 @@ var TestNetConfig = config.NetworkConfig{
 	//Note: in testnet, address is not reused so you need to use default address
 	//Another note: Default address has changed everytime you init the server => In UI, you need a mechanism to
 	//choose address anyway.
-	SenderAddress: "n1Nd8J38uyDRLwh5ShAAPvbNrqBD1wee8v",
+	SenderAddress: "mg5foPTULehWXMHieVEzHvVnUXKHtPCs6v",
 }

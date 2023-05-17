@@ -28,6 +28,7 @@ func DoCommitRevealTransaction() {
 	commitTxHash, wif, err := ExecuteCommitTransaction(client)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	fmt.Printf("Your commit tx hash is: %s\n", commitTxHash.String())
