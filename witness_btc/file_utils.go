@@ -3,17 +3,57 @@ package witnessbtc
 import (
 	"bitcoin_nft_v2/utils"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 )
 
-func PrepareData(filePath string) ([]byte, error) {
-	rawData, contentType, err := ReadFile(filePath)
+func GetFileContentType(out *os.File) (string, error) {
+	buffer := make([]byte, 512)
+	_, err := out.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+	contentType := http.DetectContentType(buffer)
+	return contentType, nil
+}
+
+func ReadFile(filePath string) ([]byte, string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, "", err
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, "", err
+	}
+
+	fileSize := fileInfo.Size()
+	if fileSize >= 3*1024*1024 {
+		return nil, "", fmt.Errorf("too much %d bytes for embedding NFT data", fileSize)
+	}
+
+	binFile, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, "", err
+	}
+
+	contentType, err := GetFileContentType(file)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return binFile, contentType, nil
+}
+
+func PrepareInscriptionData(filePath string) ([]byte, error) {
+	rawData, _, err := ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(contentType)
 
 	privKey, _ := btcec.NewPrivateKey()
 	embeddedData, _ := utils.CreateInscriptionScript(privKey.PubKey(), rawData)

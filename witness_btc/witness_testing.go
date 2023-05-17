@@ -7,14 +7,14 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 )
 
-func DoFirstTestCaseWithMP3() {
-	embeddedData, err := PrepareData("./sample-15s.mp3")
+func DoFirstTestCaseWithPNG() {
+	embeddedData, err := PrepareInscriptionData("./test.png")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	body := DeserializeWitnessDataIntoInscription(embeddedData)
-	WriteData(body, "./final.mp3")
+	WriteData(body, "./final.png")
 }
 func DoSecondTestCaseWithText() {
 	privKey, _ := btcec.NewPrivateKey()
