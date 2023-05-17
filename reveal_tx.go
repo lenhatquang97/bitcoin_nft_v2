@@ -15,29 +15,12 @@ import (
 
 func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params) (*wire.MsgTx, *btcutil.AddressTaproot, error) {
 	pubKey := randPriv.PubKey()
-
-	builder := txscript.NewScriptBuilder()
-	builder.AddData(schnorr.SerializePubKey(pubKey))
-	builder.AddOp(txscript.OP_CHECKSIG)
-	builder.AddOp(txscript.OP_0)
-	builder.AddOp(txscript.OP_IF)
-	chunks := utils.ChunkSlice(embeddedData, 520)
-	for _, chunk := range chunks {
-		builder.AddFullData(chunk)
-	}
-	pkScript, err := builder.Script()
-	pkScript = append(pkScript, txscript.OP_ENDIF)
+	pkScript, err := utils.CreateInscriptionScript(pubKey, embeddedData)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
 	}
-
-	tapLeaf := txscript.NewBaseTapLeaf(pkScript)
-	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
-	tapScriptRootHash := tapScriptTree.LeafMerkleProofs[0].RootNode.TapHash()
-	outputKey := txscript.ComputeTaprootOutputKey(
-		pubKey, tapScriptRootHash[:],
-	)
+	outputKey, tapScriptTree, tapLeaf := utils.CreateOutputKeyBasedOnScript(pubKey, pkScript)
 
 	outputScriptBuilder := txscript.NewScriptBuilder()
 	outputScriptBuilder.AddOp(txscript.OP_1)
@@ -77,7 +60,7 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 
 	sig, err := txscript.RawTxInTapscriptSignature(
 		tx, sigHashes, 0, txOut.Value,
-		txOut.PkScript, tapLeaf, txscript.SigHashDefault,
+		txOut.PkScript, *tapLeaf, txscript.SigHashDefault,
 		randPriv,
 	)
 
@@ -95,6 +78,7 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		sig, pkScript, ctrlBlockBytes,
 	}
 
+	fmt.Println("==================================Validation=============================================")
 	engine, err := txscript.NewEngine(outputScript, tx, 0, txscript.StandardVerifyFlags, nil, sigHashes, 8000, inputFetcher)
 	if err != nil {
 		return nil, nil, err

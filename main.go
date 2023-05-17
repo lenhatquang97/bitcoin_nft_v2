@@ -11,7 +11,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func main() {
+func DoCommitRevealTransaction() {
 	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", TestNetConfig)
 	if err != nil {
 		fmt.Println(err)
@@ -30,6 +30,8 @@ func main() {
 		fmt.Println(err)
 	}
 
+	fmt.Printf("Your commit tx hash is: %s\n", commitTxHash.String())
+
 	retrievedCommitTx, err := client.GetRawTransaction(commitTxHash)
 	if err != nil {
 		fmt.Println(err)
@@ -44,10 +46,13 @@ func main() {
 		return
 	}
 	fmt.Println("===================================Checkpoint 2====================================")
-	fmt.Println(revealTxHash)
-	IterateWitness(client, revealTxHash)
+	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
 	fmt.Println("===================================Success====================================")
 
+}
+
+func main() {
+	DoCommitRevealTransaction()
 }
 
 func ExecuteCommitTransaction(client *rpcclient.Client) (*chainhash.Hash, *btcutil.WIF, error) {
@@ -73,17 +78,4 @@ func ExecuteRevealTransaction(client *rpcclient.Client, commitTxHash *chainhash.
 		return nil, err
 	}
 	return revealTxHash, nil
-}
-
-func IterateWitness(client *rpcclient.Client, revealTxHash *chainhash.Hash) {
-	retrievedTx, err := client.GetRawTransaction(revealTxHash)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	for _, item := range retrievedTx.MsgTx().TxIn {
-		for _, witnessItem := range item.Witness {
-			fmt.Println(witnessItem)
-		}
-	}
 }

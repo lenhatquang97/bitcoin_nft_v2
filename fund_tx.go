@@ -69,28 +69,12 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	// extracting destination address as []byte from function argument (destination string)
-	builder := txscript.NewScriptBuilder()
-	builder.AddData(schnorr.SerializePubKey(wif.PrivKey.PubKey()))
-	builder.AddOp(txscript.OP_CHECKSIG)
-	builder.AddOp(txscript.OP_0)
-	builder.AddOp(txscript.OP_IF)
-	chunks := utils.ChunkSlice(embeddedData, 520)
-	for _, chunk := range chunks {
-		builder.AddFullData(chunk)
-	}
-	hashLockScript, err := builder.Script()
-	hashLockScript = append(hashLockScript, txscript.OP_ENDIF)
-
+	hashLockScript, err := utils.CreateInscriptionScript(wif.PrivKey.PubKey(), embeddedData)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
 	}
+	outputKey, _, _ := utils.CreateOutputKeyBasedOnScript(wif.PrivKey.PubKey(), hashLockScript)
 
-	tapLeaf := txscript.NewBaseTapLeaf(hashLockScript)
-	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
-	tapScriptRootHash := tapScriptTree.LeafMerkleProofs[0].RootNode.TapHash()
-	outputKey := txscript.ComputeTaprootOutputKey(
-		wif.PrivKey.PubKey(), tapScriptRootHash[:],
-	)
 	outputScriptBuilder := txscript.NewScriptBuilder()
 	outputScriptBuilder.AddOp(txscript.OP_1)
 	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
