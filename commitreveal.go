@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bitcoin_nft_v2/offchainnft"
 	"bitcoin_nft_v2/utils"
 	"fmt"
 )
@@ -19,13 +20,11 @@ func DoCommitRevealTransaction() {
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
 
-	// customData, err := offchainnft.FileSha256("./README.md")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
-	customData := "Hello World"
+	customData, err := offchainnft.FileSha256("./README.md")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	commitTxHash, wif, err := ExecuteCommitTransaction(client, []byte(customData))
 	if err != nil {

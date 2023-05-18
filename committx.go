@@ -34,8 +34,6 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, fmt.Errorf("no utxos")
 	}
 
-	//PrintLogUtxos(sendUtxos)
-
 	var balance float64
 	for _, item := range sendUtxos {
 		balance += item.Amount
