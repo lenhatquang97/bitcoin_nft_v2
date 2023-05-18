@@ -19,7 +19,15 @@ func DoCommitRevealTransaction() {
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(client)
+	// customData, err := offchainnft.FileSha256("./README.md")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	customData := "Hello World"
+
+	commitTxHash, wif, err := ExecuteCommitTransaction(client, []byte(customData))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -35,7 +43,15 @@ func DoCommitRevealTransaction() {
 
 	fmt.Println("===================================Checkpoint 1====================================")
 
-	revealTxHash, err := ExecuteRevealTransaction(client, commitTxHash, 0, wif, retrievedCommitTx.MsgTx().TxOut[0], TestNetConfig.ParamsObject)
+	revealTxInput := RevealTxInput{
+		CommitTxHash: commitTxHash,
+		Idx:          0,
+		Wif:          wif,
+		CommitOutput: retrievedCommitTx.MsgTx().TxOut[0],
+		ChainConfig:  TestNetConfig.ParamsObject,
+	}
+
+	revealTxHash, err := ExecuteRevealTransaction(client, &revealTxInput, []byte(customData))
 	if err != nil {
 		fmt.Println(err)
 		return

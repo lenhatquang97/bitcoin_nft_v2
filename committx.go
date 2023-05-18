@@ -59,6 +59,13 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 	outputKey, _, _ := utils.CreateOutputKeyBasedOnScript(wif.PrivKey.PubKey(), hashLockScript)
 
+	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), networkConfig.ParamsObject)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Println(address.EncodeAddress())
+
 	outputScriptBuilder := txscript.NewScriptBuilder()
 	outputScriptBuilder.AddOp(txscript.OP_1)
 	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
@@ -82,6 +89,8 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		redeemTx.AddTxIn(txIn)
 	}
 
+	fmt.Println(outputScript)
+
 	redeemTxOut := wire.NewTxOut(amount, outputScript)
 	redeemTx.AddTxOut(redeemTxOut)
 
@@ -101,8 +110,8 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	return finalRawTx, wif, nil
 }
 
-func ExecuteCommitTransaction(client *rpcclient.Client) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &TestNetConfig)
+func ExecuteCommitTransaction(client *rpcclient.Client, data []byte) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, data, &TestNetConfig)
 	if err != nil {
 		return nil, nil, err
 	}

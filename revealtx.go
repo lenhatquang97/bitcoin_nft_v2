@@ -33,6 +33,8 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		return nil, nil, err
 	}
 
+	fmt.Println(address.EncodeAddress())
+
 	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(pubKey)
 
 	tx := wire.NewMsgTx(2)
@@ -43,13 +45,16 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		},
 	})
 
-	opReturnScript, err := txscript.NullDataScript([]byte("https://example.com"))
-	if err != nil {
-		return nil, nil, fmt.Errorf("error creating op return script: %v", err)
-	}
+	// opReturnScript, err := txscript.NullDataScript([]byte("https://example.com"))
+	// if err != nil {
+	// 	return nil, nil, fmt.Errorf("error creating op return script: %v", err)
+	// }
+
+	anotherAddress, _ := btcutil.DecodeAddress("mv4rnyY3Su5gjcDNzbMLKBQkBicCtHUtFB", &chaincfg.TestNet3Params)
+	anotherAddressScript, _ := txscript.PayToAddrScript(anotherAddress)
 
 	txOut := &wire.TxOut{
-		Value: 0, PkScript: opReturnScript,
+		Value: 1000, PkScript: anotherAddressScript,
 	}
 	tx.AddTxOut(txOut)
 
@@ -92,13 +97,21 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	return tx, address, nil
 }
 
-func ExecuteRevealTransaction(client *rpcclient.Client, commitTxHash *chainhash.Hash, idx uint32, wif *btcutil.WIF, commitOutput *wire.TxOut, config *chaincfg.Params) (*chainhash.Hash, error) {
-	revealTx, _, err := RevealTx(EmbeddedData, *commitTxHash, *commitOutput, idx, wif.PrivKey, config)
+type RevealTxInput struct {
+	CommitTxHash *chainhash.Hash
+	Idx          uint32
+	Wif          *btcutil.WIF
+	CommitOutput *wire.TxOut
+	ChainConfig  *chaincfg.Params
+}
+
+func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte) (*chainhash.Hash, error) {
+	revealTx, _, err := RevealTx(data, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	revealTxHash, err := client.SendRawTransaction(revealTx, false)
+	revealTxHash, err := client.SendRawTransaction(revealTx, true)
 	if err != nil {
 		return nil, err
 	}
