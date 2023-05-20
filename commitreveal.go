@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bitcoin_nft_v2/nft_data"
+	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
+	"context"
 	"fmt"
 )
 
@@ -18,6 +21,24 @@ func DoCommitRevealTransaction() {
 		return
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
+
+	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
+	sampleDataByte, key := nft_data.GetSampleDataByte()
+	leaf := nft_tree.NewLeafNode(sampleDataByte, 0) // CoinsToSend
+
+	// We use the default, in-memory store that doesn't actually use the
+	// context.
+	updatedTree, err := tree.Insert(context.Background(), key, leaf)
+
+	updatedRoot, err := updatedTree.Root(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		// maybe panic
+		return
+	}
+
+	rootHash := utils.GetNftRoot(updatedRoot)
+	EmbeddedData = rootHash
 
 	commitTxHash, wif, err := ExecuteCommitTransaction(client)
 	if err != nil {

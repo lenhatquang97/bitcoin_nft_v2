@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"bitcoin_nft_v2/nft_tree"
+	"crypto/sha256"
+	"encoding/binary"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"
@@ -37,6 +40,18 @@ func CreateInscriptionScript(pubKey *secp256k1.PublicKey, embeddedData []byte) (
 	}
 	hashLockScript = append(hashLockScript, txscript.OP_ENDIF)
 	return hashLockScript, nil
+}
+
+func GetNftRoot(c *nft_tree.BranchNode) []byte {
+	left := c.Left.NodeHash()
+	right := c.Right.NodeHash()
+
+	h := sha256.New()
+	//_, _ = h.Write(c.AssetID[:])
+	_, _ = h.Write(left[:])
+	_, _ = h.Write(right[:])
+	_ = binary.Write(h, binary.BigEndian, c.NodeSum())
+	return h.Sum(nil)
 }
 
 func CreateOutputKeyBasedOnScript(pubKey *secp256k1.PublicKey, script []byte) (*secp256k1.PublicKey, *txscript.IndexedTapScriptTree, *txscript.TapLeaf) {
