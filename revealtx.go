@@ -45,16 +45,13 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		},
 	})
 
-	// opReturnScript, err := txscript.NullDataScript([]byte("https://example.com"))
-	// if err != nil {
-	// 	return nil, nil, fmt.Errorf("error creating op return script: %v", err)
-	// }
-
-	anotherAddress, _ := btcutil.DecodeAddress("mv4rnyY3Su5gjcDNzbMLKBQkBicCtHUtFB", &chaincfg.TestNet3Params)
-	anotherAddressScript, _ := txscript.PayToAddrScript(anotherAddress)
+	opReturnScript, err := txscript.NullDataScript([]byte("https://example.com"))
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating op return script: %v", err)
+	}
 
 	txOut := &wire.TxOut{
-		Value: 1000, PkScript: anotherAddressScript,
+		Value: 0, PkScript: opReturnScript,
 	}
 	tx.AddTxOut(txOut)
 

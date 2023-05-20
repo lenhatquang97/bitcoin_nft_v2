@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 )
 
-func GetBitcoinWalletRpcClient(certName string, networkConfig config.NetworkConfig) (*rpcclient.Client, error) {
+func GetBitcoinWalletRpcClient(certName string, networkConfig *config.NetworkConfig) (*rpcclient.Client, error) {
 	certs, _ := LoadCerts(certName)
 	client, err := rpcclient.New(&rpcclient.ConnConfig{
 		Host:         networkConfig.Host,

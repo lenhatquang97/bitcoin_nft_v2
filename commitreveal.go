@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/offchainnft"
 	"bitcoin_nft_v2/utils"
 	"fmt"
 )
 
-func DoCommitRevealTransaction() {
-	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", TestNetConfig)
+func DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
+	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", netConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -26,7 +27,7 @@ func DoCommitRevealTransaction() {
 		return
 	}
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(client, []byte(customData))
+	commitTxHash, wif, err := ExecuteCommitTransaction(client, []byte(customData), netConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -47,7 +48,7 @@ func DoCommitRevealTransaction() {
 		Idx:          0,
 		Wif:          wif,
 		CommitOutput: retrievedCommitTx.MsgTx().TxOut[0],
-		ChainConfig:  TestNetConfig.ParamsObject,
+		ChainConfig:  netConfig.ParamsObject,
 	}
 
 	revealTxHash, err := ExecuteRevealTransaction(client, &revealTxInput, []byte(customData))

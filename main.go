@@ -1,5 +1,6 @@
 package main
 
 func main() {
-	DoCommitRevealTransaction()
+	var GlobalNetCfg = TestNetConfig
+	DoCommitRevealTransaction(&GlobalNetCfg)
 }
