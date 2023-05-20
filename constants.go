@@ -9,13 +9,14 @@ import (
 const (
 	PassphraseInWallet = "12345"
 	PassphraseTimeout  = 3
-	CoinsToSend        = 10000
+	CoinsToSend        = 15000
 	//100k means sending file, so I need to create a mechanism of sending file
-	DefaultFee    = 1000
+	DefaultFee    = 3000
 	TESTNET_1_BTC = 100000000
 )
 
 var EmbeddedData = []byte("Hello World")
+
 var SimNetConfig = config.NetworkConfig{
 	Host:          "localhost:18554",
 	Endpoint:      "ws",
@@ -36,5 +37,5 @@ var TestNetConfig = config.NetworkConfig{
 	//Note: in testnet, address is not reused so you need to use default address
 	//Another note: Default address has changed everytime you init the server => In UI, you need a mechanism to
 	//choose address anyway.
-	SenderAddress: "mg5foPTULehWXMHieVEzHvVnUXKHtPCs6v",
+	SenderAddress: "n1UvANGZFzHg6HvW9eXP56dkb5g6vi4ZYE",
 }

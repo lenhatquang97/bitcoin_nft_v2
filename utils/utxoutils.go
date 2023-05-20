@@ -72,9 +72,9 @@ func GetDefaultAddress(client *rpcclient.Client, senderAddress string, config *c
 		}
 		return testNetAddress, nil
 	}
-	simNetAddress, err := btcutil.DecodeAddress(senderAddress, config)
+	customAddress, err := btcutil.DecodeAddress(senderAddress, config)
 	if err != nil {
 		return nil, err
 	}
-	return simNetAddress, nil
+	return customAddress, nil
 }

@@ -39,9 +39,6 @@ github.com/decred/dcrd/crypto/blake256
 github.com/decred/dcrd/dcrec/secp256k1/v4
 github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
 github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr
-# github.com/google/uuid v1.3.0
-## explicit
-github.com/google/uuid
 # github.com/stretchr/testify v1.8.1
 ## explicit; go 1.13
 # go.etcd.io/bbolt v1.3.5-0.20200615073812-232d8fc87f50

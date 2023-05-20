@@ -34,8 +34,6 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, fmt.Errorf("no utxos")
 	}
 
-	//PrintLogUtxos(sendUtxos)
-
 	var balance float64
 	for _, item := range sendUtxos {
 		balance += item.Amount
@@ -48,7 +46,9 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	// checking for sufficiency of account
-	if int64(balance*float64(TESTNET_1_BTC)) < amount+DefaultFee {
+	if networkConfig.Params == "testnet3" && int64(balance*float64(TESTNET_1_BTC)) < amount+DefaultFee {
+		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
+	} else if networkConfig.Params == "simnet" && int64(balance) < amount+DefaultFee {
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	}
 
@@ -58,6 +58,13 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, fmt.Errorf("error building script: %v", err)
 	}
 	outputKey, _, _ := utils.CreateOutputKeyBasedOnScript(wif.PrivKey.PubKey(), hashLockScript)
+
+	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), networkConfig.ParamsObject)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Println(address.EncodeAddress())
 
 	outputScriptBuilder := txscript.NewScriptBuilder()
 	outputScriptBuilder.AddOp(txscript.OP_1)
@@ -82,11 +89,19 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		redeemTx.AddTxIn(txIn)
 	}
 
+	fmt.Println(outputScript)
+
 	redeemTxOut := wire.NewTxOut(amount, outputScript)
 	redeemTx.AddTxOut(redeemTxOut)
 
-	if int64(balance*float64(TESTNET_1_BTC)) > amount+DefaultFee {
-		changeCoin := int64(balance*float64(TESTNET_1_BTC)) - amount - DefaultFee
+	var changeCoin int64
+	if networkConfig.Params == "testnet3" && int64(balance*float64(TESTNET_1_BTC)) > amount+DefaultFee {
+		changeCoin = int64(balance*float64(TESTNET_1_BTC)) - amount - DefaultFee
+	} else if networkConfig.Params == "simnet" && int64(balance) > amount+DefaultFee {
+		changeCoin = int64(balance) - amount - DefaultFee
+	}
+
+	if changeCoin > 0 {
 		changeAddressScript, _ := txscript.PayToAddrScript(defaultAddress)
 		rawChangeTxOut := wire.NewTxOut(changeCoin, changeAddressScript)
 		redeemTx.AddTxOut(rawChangeTxOut)
@@ -101,8 +116,8 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	return finalRawTx, wif, nil
 }
 
-func ExecuteCommitTransaction(client *rpcclient.Client) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, EmbeddedData, &TestNetConfig)
+func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, data, netConfig)
 	if err != nil {
 		return nil, nil, err
 	}

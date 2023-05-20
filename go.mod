@@ -9,7 +9,6 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
-	github.com/google/uuid v1.3.0
 )
 
 require (
