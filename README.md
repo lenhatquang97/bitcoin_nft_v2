@@ -23,13 +23,27 @@ btcctl --simnet --wallet --rpcuser=youruser --rpcpass=SomeDecentp4ssw0rd generat
 
 ### Run btcd in testnet
 ```
-btcd --testnet -u 4bmeiF7E3ny8cGf8Ok6QJZy/0pk= -P 2oljjSoRFzC5Go7hCGDID6xWi+c=
+btcd --testnet -u DeW+bgKg011pJHZnaBvgv/lMRks= -P wD9aohGo2f5LwVg7fdj1ntHQcfY=
 ```
 ### Run btcwallet in testnet
 ```
-btcwallet --testnet --rpcconnect=localhost:8334 -u 4bmeiF7E3ny8cGf8Ok6QJZy/0pk= -P 2oljjSoRFzC5Go7hCGDID6xWi+c=
+btcwallet --testnet --rpcconnect=localhost:8334 -u DeW+bgKg011pJHZnaBvgv/lMRks= -P wD9aohGo2f5LwVg7fdj1ntHQcfY=
 ```
 ### Get default address account
 ```
 btcctl --testnet --wallet --rpcuser="4bmeiF7E3ny8cGf8Ok6QJZy/0pk=" --rpcpass="2oljjSoRFzC5Go7hCGDID6xWi+c=" getaccountaddress default
+```
+
+[//]: # (rpcuser=DeW+bgKg011pJHZnaBvgv/lMRks=)
+
+[//]: # (rpcpass=wD9aohGo2f5LwVg7fdj1ntHQcfY=)
+
+```
+btcctl --testnet --wallet --rpcuser="DeW+bgKg011pJHZnaBvgv/lMRks=" --rpcpass="wD9aohGo2f5LwVg7fdj1ntHQcfY=" getaccountaddress default
+```
+
+### Kiet Seed
+
+```
+b3f0670e72bd7e636b94fc64b6d764e32e369ff86ba55269130c22b91ffeb343
 ```

@@ -30,12 +30,12 @@ var SimNetConfig = config.NetworkConfig{
 var TestNetConfig = config.NetworkConfig{
 	Host:         "localhost:18332",
 	Endpoint:     "ws",
-	User:         "4bmeiF7E3ny8cGf8Ok6QJZy/0pk=",
-	Pass:         "2oljjSoRFzC5Go7hCGDID6xWi+c=",
+	User:         "DeW+bgKg011pJHZnaBvgv/lMRks=",
+	Pass:         "wD9aohGo2f5LwVg7fdj1ntHQcfY=",
 	Params:       "testnet3",
 	ParamsObject: &chaincfg.TestNet3Params,
 	//Note: in testnet, address is not reused so you need to use default address
 	//Another note: Default address has changed everytime you init the server => In UI, you need a mechanism to
 	//choose address anyway.
-	SenderAddress: "n1UvANGZFzHg6HvW9eXP56dkb5g6vi4ZYE",
+	SenderAddress: "mntb2RxQhyXqXRZV5GE1bDkP6615EPXLHF",
 }

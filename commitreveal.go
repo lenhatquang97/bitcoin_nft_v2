@@ -2,6 +2,7 @@ package main
 
 import (
 	"bitcoin_nft_v2/config"
+	"bitcoin_nft_v2/db/sqlc"
 	"bitcoin_nft_v2/nft_data"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/offchainnft"
@@ -24,7 +25,15 @@ func DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
 
-	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
+	db, err := sqlc.NewDBByConn(sqlc.GetDBConnectionString())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	postgresDB := sqlc.New(db)
+
+	tree := nft_tree.NewFullTree(nft_tree.NewDefaultStore())
 	sampleDataByte, key := nft_data.GetSampleDataByte()
 	leaf := nft_tree.NewLeafNode(sampleDataByte, 0) // CoinsToSend
 
