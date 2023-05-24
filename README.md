@@ -27,7 +27,7 @@ btcd --testnet -u DeW+bgKg011pJHZnaBvgv/lMRks= -P wD9aohGo2f5LwVg7fdj1ntHQcfY=
 ```
 ### Run btcwallet in testnet
 ```
-btcwallet --testnet --rpcconnect=localhost:8334 -u DeW+bgKg011pJHZnaBvgv/lMRks= -P wD9aohGo2f5LwVg7fdj1ntHQcfY=
+btcwallet --testnet --rpcconnect=localhost:18334 -u DeW+bgKg011pJHZnaBvgv/lMRks= -P wD9aohGo2f5LwVg7fdj1ntHQcfY=
 ```
 ### Get default address account
 ```

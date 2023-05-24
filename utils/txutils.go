@@ -43,6 +43,14 @@ func CreateInscriptionScript(pubKey *secp256k1.PublicKey, embeddedData []byte) (
 }
 
 func GetNftRoot(c *nft_tree.BranchNode) []byte {
+	if c.NodeHash().String() != "" {
+		nodeHash := c.NodeHash()
+		h := sha256.New()
+		_, _ = h.Write(nodeHash[:])
+		_ = binary.Write(h, binary.BigEndian, c.NodeSum())
+		return h.Sum(nil)
+	}
+
 	left := c.Left.NodeHash()
 	right := c.Right.NodeHash()
 

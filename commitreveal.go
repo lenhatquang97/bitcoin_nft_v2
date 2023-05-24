@@ -2,12 +2,13 @@ package main
 
 import (
 	"bitcoin_nft_v2/config"
-	"bitcoin_nft_v2/db/sqlc"
+	db2 "bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/nft_data"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/offchainnft"
 	"bitcoin_nft_v2/utils"
 	"context"
+	"database/sql"
 	"fmt"
 )
 
@@ -25,15 +26,30 @@ func DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
 
-	db, err := sqlc.NewDBByConn(sqlc.GetDBConnectionString())
+	//db, err := sqlc.NewDBByConn(sqlc.GetDBConnectionString())
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//
+	//postgresDB := sqlc.New(db)
+
+	sqlFixture := db2.NewTestPgFixture()
+	store, err := db2.NewPostgresStore(sqlFixture.GetConfig())
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	postgresDB := sqlc.New(db)
+	txCreator := func(tx *sql.Tx) db2.TreeStore {
+		return store.WithTx(tx)
+	}
 
-	tree := nft_tree.NewFullTree(nft_tree.NewDefaultStore())
+	treeDB := db2.NewTransactionExecutor[db2.TreeStore](store, txCreator)
+
+	taroTreeStore := db2.NewTaroTreeStore(treeDB, "")
+
+	tree := nft_tree.NewFullTree(taroTreeStore)
 	sampleDataByte, key := nft_data.GetSampleDataByte()
 	leaf := nft_tree.NewLeafNode(sampleDataByte, 0) // CoinsToSend
 

@@ -66,6 +66,7 @@ func (t *FullTree) Root(ctx context.Context) (*BranchNode, error) {
 	var root Node
 	err := t.store.View(ctx, func(tx TreeStoreViewTx) error {
 		var err error
+
 		root, err = tx.RootNode()
 		return err
 	})
