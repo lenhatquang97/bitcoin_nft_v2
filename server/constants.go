@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bitcoin_nft_v2/config"

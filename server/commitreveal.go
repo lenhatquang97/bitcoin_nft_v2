@@ -1,9 +1,8 @@
-package main
+package server
 
 import (
 	"bitcoin_nft_v2/config"
 	db2 "bitcoin_nft_v2/db"
-	"bitcoin_nft_v2/nft_data"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/offchainnft"
 	"bitcoin_nft_v2/utils"
@@ -12,7 +11,20 @@ import (
 	"fmt"
 )
 
-func DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
+func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
+	nftUrl := ""
+
+	// Get Nft Data
+	nftData, err := sv.GetNftDataByUrl(context.Background(), nftUrl)
+	if err != nil {
+		print("Get Nft Data Failed")
+		fmt.Println(err)
+		return
+	}
+
+	// Compute Nft Data Info
+	dataByte, key := sv.ComputeNftDataByte(nftData)
+
 	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", netConfig)
 	if err != nil {
 		fmt.Println(err)
@@ -34,33 +46,29 @@ func DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 	//
 	//postgresDB := sqlc.New(db)
 
-	sqlFixture := db2.NewTestPgFixture()
-	store, err := db2.NewPostgresStore(sqlFixture.GetConfig())
+	txCreator := func(tx *sql.Tx) db2.TreeStore {
+		return sv.PostgresDB.WithTx(tx)
+	}
+
+	treeDB := db2.NewTransactionExecutor[db2.TreeStore](sv.PostgresDB, txCreator)
+
+	taroTreeStore := db2.NewTaroTreeStore(treeDB, "quang4")
+
+	tree := nft_tree.NewFullTree(taroTreeStore)
+	leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
+
+	leaf.NodeHash()
+	// We use the default, in-memory store that doesn't actually use the
+	// context.
+	updatedTree, err := tree.Insert(context.Background(), key, leaf)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	txCreator := func(tx *sql.Tx) db2.TreeStore {
-		return store.WithTx(tx)
-	}
-
-	treeDB := db2.NewTransactionExecutor[db2.TreeStore](store, txCreator)
-
-	taroTreeStore := db2.NewTaroTreeStore(treeDB, "")
-
-	tree := nft_tree.NewFullTree(taroTreeStore)
-	sampleDataByte, key := nft_data.GetSampleDataByte()
-	leaf := nft_tree.NewLeafNode(sampleDataByte, 0) // CoinsToSend
-
-	// We use the default, in-memory store that doesn't actually use the
-	// context.
-	updatedTree, err := tree.Insert(context.Background(), key, leaf)
-
 	updatedRoot, err := updatedTree.Root(context.Background())
 	if err != nil {
 		fmt.Println(err)
-		// maybe panic
 		return
 	}
 
@@ -75,6 +83,7 @@ func DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 
 	commitTxHash, wif, err := ExecuteCommitTransaction(client, []byte(customData), netConfig)
 	if err != nil {
+		fmt.Println("commitLog")
 		fmt.Println(err)
 		return
 	}

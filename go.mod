@@ -10,7 +10,7 @@ require (
 	github.com/btcsuite/btcwallet/walletdb v1.4.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/jmoiron/sqlx v1.3.5
+	github.com/google/uuid v1.3.0
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/stretchr/testify v1.8.3
 )

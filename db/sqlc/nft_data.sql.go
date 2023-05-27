@@ -7,6 +7,15 @@ import (
 	"context"
 )
 
+const deleteNftDataByUrl = `-- name: DeleteNftDataByUrl :exec
+DELETE FROM nft_data WHERE url=$1
+`
+
+func (q *Queries) DeleteNftDataByUrl(ctx context.Context, url string) error {
+	_, err := q.db.ExecContext(ctx, deleteNftDataByUrl, url)
+	return err
+}
+
 const getListNft = `-- name: GetListNft :many
 SELECT id, url, memo
 FROM nft_data
@@ -36,15 +45,29 @@ func (q *Queries) GetListNft(ctx context.Context, limit int32) ([]NftDatum, erro
 	return items, nil
 }
 
-const getNftData = `-- name: GetNftData :one
+const getNFtDataByUrl = `-- name: GetNFtDataByUrl :one
+SELECT id, url, memo
+FROM nft_data
+WHERE url = $1
+LIMIT 1
+`
+
+func (q *Queries) GetNFtDataByUrl(ctx context.Context, url string) (NftDatum, error) {
+	row := q.db.QueryRowContext(ctx, getNFtDataByUrl, url)
+	var i NftDatum
+	err := row.Scan(&i.ID, &i.Url, &i.Memo)
+	return i, err
+}
+
+const getNftDataByID = `-- name: GetNftDataByID :one
 SELECT id, url, memo
 FROM nft_data
 WHERE id=$1
 LIMIT 1
 `
 
-func (q *Queries) GetNftData(ctx context.Context, id string) (NftDatum, error) {
-	row := q.db.QueryRowContext(ctx, getNftData, id)
+func (q *Queries) GetNftDataByID(ctx context.Context, id string) (NftDatum, error) {
+	row := q.db.QueryRowContext(ctx, getNftDataByID, id)
 	var i NftDatum
 	err := row.Scan(&i.ID, &i.Url, &i.Memo)
 	return i, err
