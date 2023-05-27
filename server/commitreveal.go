@@ -2,9 +2,11 @@ package server
 
 import (
 	"bitcoin_nft_v2/config"
+	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"context"
+	"database/sql"
 	"fmt"
 )
 
@@ -42,6 +44,8 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 		return
 	}
 
+	fmt.Println("Sender root hash update is: ", rootHashForSender)
+
 	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", netConfig)
 	if err != nil {
 		fmt.Println(err)
@@ -54,41 +58,6 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 		return
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
-
-	//db, err := sqlc.NewDBByConn(sqlc.GetDBConnectionString())
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//postgresDB := sqlc.New(db)
-
-	//txCreator := func(tx *sql.Tx) db2.TreeStore {
-	//	return sv.PostgresDB.WithTx(tx)
-	//}
-	//
-	//treeDB := db2.NewTransactionExecutor[db2.TreeStore](sv.PostgresDB, txCreator)
-	//
-	//taroTreeStore := db2.NewTaroTreeStore(treeDB, "quang4")
-	//
-	//tree := nft_tree.NewFullTree(taroTreeStore)
-
-	// We use the default, in-memory store that doesn't actually use the
-	// context.
-	//updatedTree, err := tree.Insert(context.Background(), key, leaf)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//updatedRoot, err := updatedTree.Root(context.Background())
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//rootHash := utils.GetNftRoot(updatedRoot)
-	//EmbeddedData = rootHash
 
 	//customData, err := offchainnft.FileSha256("./README.md")
 	if err != nil {
@@ -126,6 +95,37 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 		fmt.Println(err)
 		return
 	}
+
+	txCreator := func(tx *sql.Tx) db.TreeStore {
+		return sv.PostgresDB.WithTx(tx)
+	}
+
+	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.PostgresDB, txCreator)
+
+	taroTreeStore := db.NewTaroTreeStore(treeDB, "quang4")
+
+	tree := nft_tree.NewFullTree(taroTreeStore)
+
+	_, err = tree.Delete(context.Background(), key)
+	if err != nil {
+		fmt.Println("Delete leaf after reveal tx failed", err)
+	}
+	// We use the default, in-memory store that doesn't actually use the
+	// context.
+	//updatedTree, err := tree.Insert(context.Background(), key, leaf)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//
+	//updatedRoot, err := updatedTree.Root(context.Background())
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//
+	//rootHash := utils.GetNftRoot(updatedRoot)
+	//EmbeddedData = rootHash
 	fmt.Println("===================================Checkpoint 2====================================")
 	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
 	fmt.Println("===================================Success====================================")

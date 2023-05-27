@@ -7,7 +7,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
-	"github.com/google/uuid"
 )
 
 type NftData struct {
@@ -17,8 +16,7 @@ type NftData struct {
 }
 
 // InsertNewNftData need to verify that nft is own by user
-func (sv *Server) InsertNewNftData(ctx context.Context, url string, memo string) error {
-	nftID := uuid.New().String()
+func (sv *Server) InsertNewNftData(ctx context.Context, id string, url string, memo string) error {
 	if url == "" {
 		return utils.WrapperError("_NFT_URL_REQUIRED_")
 	}
@@ -27,8 +25,9 @@ func (sv *Server) InsertNewNftData(ctx context.Context, url string, memo string)
 		return utils.WrapperError("_NFT_MEMO_REQUIRED_")
 	}
 	err := sv.PostgresDB.InsertNftData(ctx, sqlc.InsertNftDataParams{
-		ID:  nftID,
-		Url: url,
+		ID:   id,
+		Url:  url,
+		Memo: memo,
 	})
 
 	if err != nil {
