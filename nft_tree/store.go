@@ -1,6 +1,7 @@
 package nft_tree
 
 import (
+	"bitcoin_nft_v2/db/sqlc"
 	"context"
 	"fmt"
 	"sync"
@@ -136,6 +137,54 @@ func NewDefaultStore() *DefaultStore {
 		leaves:          make(map[NodeHash]*LeafNode),
 		compactedLeaves: make(map[NodeHash]*CompactedLeafNode),
 	}
+}
+
+// newKey is a helper to convert a byte slice of the correct size to a 32 byte
+// array.
+func newKey(data []byte) ([32]byte, error) {
+	var key [32]byte
+
+	if len(data) != 32 {
+		return key, fmt.Errorf("invalid key size")
+	}
+
+	copy(key[:], data)
+	return key, nil
+}
+
+func NewStoreWithDB(nodes []sqlc.MssmtNode) (*DefaultStore, error) {
+	branches := make(map[NodeHash]*BranchNode)
+	compactedLeaves := make(map[NodeHash]*CompactedLeafNode)
+	for _, node := range nodes {
+		// branch node
+		if node.LHashKey != nil || node.RHashKey != nil {
+			nodeHash, err := newKey(node.HashKey)
+			if err != nil {
+				return nil, err
+			}
+			branches[nodeHash] = NewComputedBranch(nodeHash, uint64(node.Sum))
+		} else { // leaf node
+			nodeHash, err := newKey(node.HashKey)
+			if err != nil {
+				return nil, err
+			}
+
+			k, err := newKey(node.Key)
+			if err != nil {
+				return nil, err
+			}
+			compactedLeaves[nodeHash] = &CompactedLeafNode{
+				LeafNode: NewLeafNode(node.LHashKey, uint64(node.Sum)),
+				key:      k,
+			}
+		}
+	}
+
+	return &DefaultStore{
+		branches:        branches,
+		leaves:          make(map[NodeHash]*LeafNode),
+		compactedLeaves: compactedLeaves,
+	}, nil
 }
 
 // NumBranches returns the number of stored branches.

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bitcoin_nft_v2/db/sqlc"
+	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"context"
 	"crypto/sha256"
@@ -74,4 +75,41 @@ func (sv *Server) ComputeNftDataByte(data *NftData) ([]byte, [32]byte) {
 	}
 
 	return rawData, *(*[32]byte)(h.Sum(nil))
+}
+
+func (sv *Server) NewRootHashForReceiver(key [32]byte, leaf *nft_tree.LeafNode) ([]byte, error) {
+	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
+
+	updatedTree, err := tree.Insert(context.TODO(), key, leaf)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRoot, err := updatedTree.Root(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.GetNftRoot(updatedRoot), nil
+}
+
+func (sv *Server) PreComputeRootHashForSender(ctx context.Context, key [32]byte, leaf *nft_tree.LeafNode, nameSpace string) ([]byte, error) {
+	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
+
+	updatedTree, err := tree.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, nameSpace)
+	if err != nil {
+		return nil, err
+	}
+
+	updated2Tree, err := updatedTree.Insert(context.TODO(), key, leaf)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedRoot, err := updated2Tree.Root(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.GetNftRoot(updatedRoot), nil
 }

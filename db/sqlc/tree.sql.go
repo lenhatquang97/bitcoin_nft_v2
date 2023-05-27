@@ -179,6 +179,42 @@ func (q *Queries) FetchRootNode(ctx context.Context, namespace string) (MssmtNod
 	return i, err
 }
 
+const getAllNodeByNameSpace = `-- name: GetAllNodeByNameSpace :many
+SELECT hash_key, l_hash_key, r_hash_key, key, value, sum, namespace from mssmt_nodes
+WHERE namespace=$1
+`
+
+func (q *Queries) GetAllNodeByNameSpace(ctx context.Context, namespace string) ([]MssmtNode, error) {
+	rows, err := q.db.QueryContext(ctx, getAllNodeByNameSpace, namespace)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MssmtNode
+	for rows.Next() {
+		var i MssmtNode
+		if err := rows.Scan(
+			&i.HashKey,
+			&i.LHashKey,
+			&i.RHashKey,
+			&i.Key,
+			&i.Value,
+			&i.Sum,
+			&i.Namespace,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertBranch = `-- name: InsertBranch :exec
 INSERT INTO mssmt_nodes (
     hash_key, l_hash_key, r_hash_key, key, value, sum, namespace

@@ -65,3 +65,7 @@ INSERT INTO mssmt_roots (
              $1, $2
          ) ON CONFLICT (namespace)
     DO UPDATE SET root_hash = EXCLUDED.root_hash;
+
+-- name: GetAllNodeByNameSpace :many
+SELECT * from mssmt_nodes
+WHERE namespace=$1;
