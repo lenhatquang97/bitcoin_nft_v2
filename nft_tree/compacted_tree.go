@@ -1,7 +1,6 @@
 package nft_tree
 
 import (
-	"bitcoin_nft_v2/db"
 	"context"
 )
 
@@ -366,19 +365,4 @@ func (t *CompactedTree) MerkleProof(ctx context.Context, key [hashSize]byte) (
 	}
 
 	return NewProof(proof), nil
-}
-
-func (t *CompactedTree) LoadTreeIntoMemoryByNameSpace(ctx context.Context, postgresDB *db.PostgresStore, namespace string) (*CompactedTree, error) {
-	res, err := postgresDB.GetAllNodeByNameSpace(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	defaultStore, err := NewStoreWithDB(res)
-	if err != nil {
-		return nil, err
-	}
-	tree := NewCompactedTree(defaultStore)
-
-	return tree, nil
 }

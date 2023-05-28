@@ -3,6 +3,7 @@ package server
 import (
 	"bitcoin_nft_v2/db/sqlc"
 	"bitcoin_nft_v2/nft_tree"
+	"bitcoin_nft_v2/nft_tree/common"
 	"bitcoin_nft_v2/utils"
 	"context"
 	"crypto/sha256"
@@ -93,9 +94,7 @@ func (sv *Server) NewRootHashForReceiver(key [32]byte, leaf *nft_tree.LeafNode) 
 }
 
 func (sv *Server) PreComputeRootHashForSender(ctx context.Context, key [32]byte, leaf *nft_tree.LeafNode, nameSpace string) ([]byte, error) {
-	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
-
-	updatedTree, err := tree.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, nameSpace)
+	updatedTree, err := common.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, nameSpace)
 	if err != nil {
 		return nil, err
 	}

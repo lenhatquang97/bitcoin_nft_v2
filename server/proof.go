@@ -3,6 +3,7 @@ package server
 import (
 	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/nft_tree"
+	"bitcoin_nft_v2/nft_tree/common"
 	"bitcoin_nft_v2/utils"
 	"bytes"
 	"context"
@@ -95,10 +96,8 @@ func (sv *Server) VerifyDataInTree(ctx context.Context, rootHash []byte, nftData
 	leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
 	leaf.NodeHash()
 
-	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
-
 	// check name space or merge all namespace into one?
-	updatedTree, err := tree.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, "default")
+	updatedTree, err := common.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, "default")
 	if err != nil {
 		return false, err
 	}
