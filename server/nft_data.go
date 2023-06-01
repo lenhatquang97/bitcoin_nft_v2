@@ -49,17 +49,23 @@ func (sv *Server) DeleteNftData(ctx context.Context, url string) error {
 }
 
 // GetNftDataByUrl need to unit test
-func (sv *Server) GetNftDataByUrl(ctx context.Context, url string) (*NftData, error) {
-	nftData, err := sv.PostgresDB.GetNFtDataByUrl(ctx, url)
-	if err != nil {
-		return nil, err
+func (sv *Server) GetNftDataByUrl(ctx context.Context, urls []string) ([]*NftData, error) {
+
+	var res []*NftData
+	for _, url := range urls {
+		nftData, err := sv.PostgresDB.GetNFtDataByUrl(ctx, url)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, &NftData{
+			ID:   nftData.ID,
+			Url:  nftData.Url,
+			Memo: nftData.Memo,
+		})
 	}
 
-	return &NftData{
-		ID:   nftData.ID,
-		Url:  nftData.Url,
-		Memo: nftData.Memo,
-	}, nil
+	return res, nil
 }
 
 // ComputeNftDataByte return data byte, key data
@@ -77,17 +83,27 @@ func (sv *Server) ComputeNftDataByte(data *NftData) ([]byte, [32]byte) {
 	return rawData, *(*[32]byte)(h.Sum(nil))
 }
 
-func (sv *Server) NewRootHashForReceiver(key [32]byte, leaf *nft_tree.LeafNode) ([]byte, error) {
+func (sv *Server) NewRootHashForReceiver(nftData []*NftData) ([]byte, error) {
 	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
 
-	updatedTree, err := tree.Insert(context.TODO(), key, leaf)
-	if err != nil {
-		return nil, err
-	}
+	var updatedRoot *nft_tree.BranchNode
+	for _, item := range nftData {
+		// Compute Nft Data Info
+		dataByte, key := sv.ComputeNftDataByte(item)
 
-	updatedRoot, err := updatedTree.Root(context.Background())
-	if err != nil {
-		return nil, err
+		// Init Root Hash For Receiver
+		leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
+		leaf.NodeHash()
+
+		updatedTree, err := tree.Insert(context.TODO(), key, leaf)
+		if err != nil {
+			return nil, err
+		}
+
+		updatedRoot, err = updatedTree.Root(context.Background())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return utils.GetNftRoot(updatedRoot), nil

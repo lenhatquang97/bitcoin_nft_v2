@@ -2,34 +2,28 @@ package server
 
 import (
 	"bitcoin_nft_v2/config"
-	"bitcoin_nft_v2/db"
-	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"context"
-	"database/sql"
 	"fmt"
 )
 
 func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
-	nftUrl := ""
-	nameSpace := "kiet"
+	nftUrls := []string{
+		"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
+		"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
+		"https://amnhacvietthanh.vn/wp-content/uploads/2020/10/Yamaha-C40.jpg",
+	}
+	//nameSpace := DefaultNameSpace
 
 	// Get Nft Data
-	nftData, err := sv.GetNftDataByUrl(context.Background(), nftUrl)
+	nftData, err := sv.GetNftDataByUrl(context.Background(), nftUrls)
 	if err != nil {
 		print("Get Nft Data Failed")
 		fmt.Println(err)
 		return
 	}
 
-	// Compute Nft Data Info
-	dataByte, key := sv.ComputeNftDataByte(nftData)
-
-	// Init Root Hash For Receiver
-	leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
-	leaf.NodeHash()
-
-	rootHashForReceiver, err := sv.NewRootHashForReceiver(key, leaf)
+	rootHashForReceiver, err := sv.NewRootHashForReceiver(nftData)
 	if err != nil {
 		fmt.Println("Compute root hash for receiver error")
 		fmt.Println(err)
@@ -37,14 +31,14 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 	}
 
 	// root hash for sender
-	rootHashForSender, err := sv.PreComputeRootHashForSender(context.Background(), key, leaf, nameSpace)
-	if err != nil {
-		fmt.Println("Compute root hash for sender error")
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println("Sender root hash update is: ", rootHashForSender)
+	//rootHashForSender, err := sv.PreComputeRootHashForSender(context.Background(), key, leaf, nameSpace)
+	//if err != nil {
+	//	fmt.Println("Compute root hash for sender error")
+	//	fmt.Println(err)
+	//	return
+	//}
+	//
+	//fmt.Println("Sender root hash update is: ", rootHashForSender)
 
 	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", netConfig)
 	if err != nil {
@@ -96,20 +90,20 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 		return
 	}
 
-	txCreator := func(tx *sql.Tx) db.TreeStore {
-		return sv.PostgresDB.WithTx(tx)
-	}
-
-	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.PostgresDB, txCreator)
-
-	taroTreeStore := db.NewTaroTreeStore(treeDB, "quang4")
-
-	tree := nft_tree.NewFullTree(taroTreeStore)
-
-	_, err = tree.Delete(context.Background(), key)
-	if err != nil {
-		fmt.Println("Delete leaf after reveal tx failed", err)
-	}
+	//txCreator := func(tx *sql.Tx) db.TreeStore {
+	//	return sv.PostgresDB.WithTx(tx)
+	//}
+	//
+	//treeDB := db.NewTransactionExecutor[db.TreeStore](sv.PostgresDB, txCreator)
+	//
+	//taroTreeStore := db.NewTaroTreeStore(treeDB, DefaultNameSpace)
+	//
+	//tree := nft_tree.NewFullTree(taroTreeStore)
+	//
+	//_, err = tree.Delete(context.Background(), key)
+	//if err != nil {
+	//	fmt.Println("Delete leaf after reveal tx failed", err)
+	//}
 	// We use the default, in-memory store that doesn't actually use the
 	// context.
 	//updatedTree, err := tree.Insert(context.Background(), key, leaf)

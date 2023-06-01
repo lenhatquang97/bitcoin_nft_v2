@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"math/rand"
 )
 
 const (
@@ -131,14 +132,25 @@ func VerifyEqual(id, url, memo string) {
 	fmt.Println("[VerifyEqual] success")
 }
 
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
 // func test to create tx
 func main() {
-	url := "https://thesaigontimes.vn/wp-content/uploads/2022/11/18.jpg"
-	memo := "abc"
+	url := "https://amnhacvietthanh.vn/wp-content/uploads/2020/10/Yamaha-C40.jpg"
+	memo := RandStringBytes(5)
 	id := uuid.New().String()
 
-	//ImportNewNftData(url, memo)
+	ImportNftData(id, url, memo)
 	//DeleteNftData(url)
+	//ExportNftData(url)
 	//ImportNftData(id, url, memo)
-	VerifyEqual(id, url, memo)
+	//VerifyEqual(id, url, memo)
 }

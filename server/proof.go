@@ -11,6 +11,10 @@ import (
 	"fmt"
 )
 
+const (
+	DefaultNameSpace = "default"
+)
+
 func (sv *Server) ImportProof(ctx context.Context, id, url, memo string) error {
 	// import nft data and merge tree
 	dataByte, key := sv.ComputeNftDataByte(&NftData{
@@ -29,7 +33,7 @@ func (sv *Server) ImportProof(ctx context.Context, id, url, memo string) error {
 
 	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.PostgresDB, txCreator)
 
-	taroTreeStore := db.NewTaroTreeStore(treeDB, "quang4")
+	taroTreeStore := db.NewTaroTreeStore(treeDB, DefaultNameSpace)
 
 	tree := nft_tree.NewFullTree(taroTreeStore)
 
@@ -64,13 +68,14 @@ func (sv *Server) ExportProof(ctx context.Context, url string) (*NftData, error)
 		return nil, utils.WrapperError("[ExportProof] _NFT_URL_REQUIRED_")
 	}
 
-	nftData, err := sv.GetNftDataByUrl(ctx, url)
+	nftDatas, err := sv.GetNftDataByUrl(ctx, []string{url})
 	if err != nil {
 		fmt.Println("[ExportProof] Get nft data error ", err)
 		fmt.Println(err)
 		return nil, err
 	}
 
+	nftData := nftDatas[0]
 	// export data and delete
 	nftDataRes := &NftData{
 		ID:   nftData.ID,
