@@ -27,3 +27,8 @@ type ImportNftDataRequest struct {
 type ExportNftDataRequest struct {
 	Url string
 }
+
+// SwitchModeRequest put
+type SwitchModeRequest struct {
+	Mode string `json:"mode"`
+}

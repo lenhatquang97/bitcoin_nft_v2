@@ -119,3 +119,22 @@ func WrapperViewNftData(ctx *gin.Context) {
 
 	ctx.JSON(200, res)
 }
+
+func WrapperSetMode(ctx *gin.Context) {
+	var req SwitchModeRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(400, err)
+	}
+
+	if req.Mode == "" {
+		ctx.JSON(400, "Mode just only is on_chain OR off_chain")
+	}
+
+	err = sv.SetMode(req.Mode)
+	if err != nil {
+		ctx.JSON(400, err)
+	}
+
+	ctx.JSON(200, "OK")
+}
