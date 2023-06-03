@@ -10,7 +10,11 @@ INSERT INTO nft_data (
 -- name: GetListNft :many
 SELECT *
 FROM nft_data
-LIMIT $1;
+LIMIT $1 OFFSET $2;
+
+-- name: GetAllNft :many
+SELECT *
+FROM nft_data;
 
 -- name: GetNftDataByID :one
 SELECT *
