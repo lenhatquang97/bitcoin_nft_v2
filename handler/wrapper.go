@@ -138,3 +138,22 @@ func WrapperSetMode(ctx *gin.Context) {
 
 	ctx.JSON(200, "OK")
 }
+
+func WrapperCreateWallet(ctx *gin.Context) {
+	var req CreateWalletRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(400, err)
+	}
+
+	if req.Name == "" || req.Passphrase == "" {
+		ctx.JSON(400, "Input invalid")
+	}
+
+	err = sv.CreateWallet(req.Name, req.Passphrase)
+	if err != nil {
+		ctx.JSON(400, err)
+	}
+
+	ctx.JSON(200, "OK")
+}

@@ -33,6 +33,11 @@ type SwitchModeRequest struct {
 	Mode string `json:"mode"`
 }
 
+type CreateWalletRequest struct {
+	Name       string `json:"name"`
+	Passphrase string `json:"passphrase"`
+}
+
 // Config config
 type Config struct {
 	Mode          string

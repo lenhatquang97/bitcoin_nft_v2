@@ -231,8 +231,15 @@ func (sv *ServerOffChain) ViewNftData() ([]*NftData, error) {
 	return res, nil
 }
 
-func (sv *ServerOffChain) CreateWallet() {
+func (sv *ServerOffChain) CreateWallet(name string, passphrase string) error {
+	res, err := sv.client.CreateWallet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
+	if err != nil {
+		return err
+	}
 
+	fmt.Println(res)
+
+	return nil
 }
 
 func (sv *ServerOffChain) GetNftData() {

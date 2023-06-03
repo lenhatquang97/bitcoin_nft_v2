@@ -58,6 +58,7 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	router := rg.Group("/btc_nft")
 	router.POST("/send", WrapperSend)
 	router.POST("/import", WrapperImportProof)
+	router.POST("/wallet", WrapperCreateWallet)
 	router.PUT("/mode", WrapperSetMode)
 	router.POST("/export", WrapperExportProof)
 	router.GET("/view-data", WrapperViewNftData)
