@@ -16,4 +16,14 @@ migrate_down:
 sqlc:
 	sqlc generate
 
-.PHONY: postgres createdb dropdb migrate_up migrate_down sqlc
+run-test-net:
+#                1         2     	   3  					4  							 5 						       6
+#	go run . chain_mode	network       host                 user                         pass 					send_address
+	go run . off_chain testnet3 localhost:18332 DeW+bgKg011pJHZnaBvgv/lMRks= wD9aohGo2f5LwVg7fdj1ntHQcfY= mntb2RxQhyXqXRZV5GE1bDkP6615EPXLHF
+
+run-sim-net:
+#                1         2     	   3  		 4  		   5 						 6
+#	go run . chain_mode	network       host      user          pass 					send_address
+	go run . off_chain simnet localhost:18554 youruser SomeDecentp4ssw0rd SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ
+
+.PHONY: postgres createdb dropdb migrate_up migrate_down sqlc run-test-net

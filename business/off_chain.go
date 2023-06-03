@@ -29,7 +29,7 @@ type ServerOffChain struct {
 	DB     *db.PostgresStore
 }
 
-func NewServerOffChain(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, error) {
+func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, error) {
 	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", networkCfg)
 	if err != nil {
 		return nil, err

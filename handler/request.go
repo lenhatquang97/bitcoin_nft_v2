@@ -32,3 +32,14 @@ type ExportNftDataRequest struct {
 type SwitchModeRequest struct {
 	Mode string `json:"mode"`
 }
+
+// Config config
+type Config struct {
+	Mode          string
+	Network       string
+	Host          string
+	User          string
+	Password      string
+	SenderAddress string
+	Port          string
+}
