@@ -24,6 +24,6 @@ run-test-net:
 run-sim-net:
 #                1         2     	   3  		 4  		   5 						 6
 #	go run . chain_mode	network       host      user          pass 					send_address
-	go run . off_chain simnet localhost:18554 youruser SomeDecentp4ssw0rd SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ
+	go run . off_chain simnet localhost:18554 youruser SomeDecentp4ssw0rd SfF7WYPTkHnjx1jKweNYAoFGnhZH1Q2291
 
 .PHONY: postgres createdb dropdb migrate_up migrate_down sqlc run-test-net

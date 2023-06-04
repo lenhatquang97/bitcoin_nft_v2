@@ -8,7 +8,7 @@ btcd --simnet --rpcuser=youruser --rpcpass=SomeDecentp4ssw0rd --miningaddr=SeZdp
 
 ### Run btcwallet
 ```
-btcwallet --simnet --username=youruser --password=SomeDecentp4ssw0rd
+    btcwallet --simnet --username=youruser --password=SomeDecentp4ssw0rd
 ```
 
 
@@ -46,4 +46,9 @@ btcctl --testnet --wallet --rpcuser="DeW+bgKg011pJHZnaBvgv/lMRks=" --rpcpass="wD
 
 ```
 b3f0670e72bd7e636b94fc64b6d764e32e369ff86ba55269130c22b91ffeb343
+```
+
+### Kiet Address Simnet
+```
+SfF7WYPTkHnjx1jKweNYAoFGnhZH1Q2291
 ```

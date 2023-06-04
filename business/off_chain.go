@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/btcsuite/btcd/rpcclient"
+	"os/exec"
 )
 
 const (
@@ -235,12 +236,48 @@ func (sv *ServerOffChain) ViewNftData() ([]*NftData, error) {
 }
 
 func (sv *ServerOffChain) CreateWallet(name string, passphrase string) error {
-	res, err := sv.client.CreateWallet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
+	//res, err := sv.client.CreateWallet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
+	//if err != nil {
+	//	return err
+	//}
+
+	app := "btcwallet"
+
+	arg0 := "--simnet"
+	arg1 := "--username=" + sv.Config.User
+	arg2 := "--password=" + sv.Config.Pass
+	arg3 := "--create\n"
+	arg4 := "12345\n"
+	arg5 := "12345\n"
+	arg6 := "n\n"
+	arg7 := "n\n"
+	arg8 := "OK\n"
+
+	cmd := exec.Command(app, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+	fmt.Println(cmd)
+	//stdin, e := cmd.StdinPipe()
+	//if e != nil {
+	//	fmt.Println("Err when get stdin ", e)
+	//	return e
+	//}
+	//stdin.Write([]byte("12345\n"))
+	//
+	stdout, err := cmd.Output()
 	if err != nil {
+		fmt.Println("Stdout value: ", string(stdout))
+		fmt.Println("error when run cmd ", err)
 		return err
 	}
-
-	fmt.Println(res)
+	//stdin.Write([]byte("12345\n"))
+	//fmt.Println(stdout)
+	//stdin.Write([]byte("12345\n"))
+	//fmt.Println(stdout)
+	//stdin.Write([]byte("n\n"))
+	//fmt.Println(stdout)
+	//stdin.Write([]byte("n\n"))
+	//fmt.Println(stdout)
+	//stdin.Write([]byte("OK\n"))
+	//fmt.Println(stdout)
 
 	return nil
 }
