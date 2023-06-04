@@ -63,6 +63,7 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	router.POST("/export", WrapperExportProof)
 	router.GET("/view-data", WrapperViewNftData)
 	router.GET("/balance", WrapperCheckBalance)
+	router.GET("/tx", WrapperGetTx)
 }
 
 func Run(config *Config) {

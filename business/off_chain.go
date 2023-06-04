@@ -4,6 +4,7 @@ import (
 	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/db/sqlc"
+	"bitcoin_nft_v2/gobcy"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"context"
@@ -11,7 +12,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/btcsuite/btcd/rpcclient"
+	"io"
+	"os"
 	"os/exec"
+	"time"
 )
 
 const (
@@ -246,38 +250,37 @@ func (sv *ServerOffChain) CreateWallet(name string, passphrase string) error {
 	arg0 := "--simnet"
 	arg1 := "--username=" + sv.Config.User
 	arg2 := "--password=" + sv.Config.Pass
-	arg3 := "--create\n"
-	arg4 := "12345\n"
-	arg5 := "12345\n"
-	arg6 := "n\n"
-	arg7 := "n\n"
-	arg8 := "OK\n"
+	arg3 := "--create"
 
-	cmd := exec.Command(app, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
-	fmt.Println(cmd)
-	//stdin, e := cmd.StdinPipe()
-	//if e != nil {
-	//	fmt.Println("Err when get stdin ", e)
-	//	return e
-	//}
-	//stdin.Write([]byte("12345\n"))
-	//
-	stdout, err := cmd.Output()
+	cmd := exec.Command(app, arg0, arg1, arg2, arg3)
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		io.WriteString(os.Stdin, "12345\n")
+		time.Sleep(1 * time.Second)
+
+		io.WriteString(os.Stdin, "12345\n")
+		time.Sleep(1 * time.Second)
+
+		io.WriteString(os.Stdin, "n\n")
+		time.Sleep(1 * time.Second)
+
+		io.WriteString(os.Stdin, "n\n")
+		time.Sleep(1 * time.Second)
+
+		io.WriteString(os.Stdin, "OK\n")
+
+		//time.Sleep(5 * time.Second)
+		//io.WriteString(os.Stdin, "echo hello again\n")
+	}()
+
+	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Stdout value: ", string(stdout))
-		fmt.Println("error when run cmd ", err)
+		fmt.Println("Error run ", err)
 		return err
 	}
-	//stdin.Write([]byte("12345\n"))
-	//fmt.Println(stdout)
-	//stdin.Write([]byte("12345\n"))
-	//fmt.Println(stdout)
-	//stdin.Write([]byte("n\n"))
-	//fmt.Println(stdout)
-	//stdin.Write([]byte("n\n"))
-	//fmt.Println(stdout)
-	//stdin.Write([]byte("OK\n"))
-	//fmt.Println(stdout)
 
 	return nil
 }
@@ -383,4 +386,25 @@ func (sv *ServerOffChain) SetMode(mode string) error {
 
 	sv.mode = mode
 	return nil
+}
+
+func (sv *ServerOffChain) GetTx(txId string) (interface{}, error) {
+	//using a struct literal
+	bc := gobcy.API{"0e3279a9ec4e4859ba55945c6a29a6ec", "btc", "test3"}
+
+	//query away
+	fmt.Println(bc.GetChain())
+
+	res, err := bc.GetTX(txId, make(map[string]string))
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return res, nil
+
+	//fmt.Println("Success create add key chain")
+	//fmt.Println(res)
+	//bc.CreateWallet()
+	//fmt.Println(bc.GetBlock(300000, "", nil))
 }

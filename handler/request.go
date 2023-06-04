@@ -49,3 +49,7 @@ type Config struct {
 	SenderAddress string
 	Port          string
 }
+
+type GetTxRequest struct {
+	TxID string `json:"txId"`
+}
