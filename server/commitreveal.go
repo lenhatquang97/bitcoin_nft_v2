@@ -59,7 +59,7 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 		return
 	}
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(client, rootHashForReceiver, netConfig)
+	commitTxHash, wif, err := ExecuteCommitTransaction(client, rootHashForReceiver, netConfig, 0)
 	if err != nil {
 		fmt.Println("commitLog")
 		fmt.Println(err)

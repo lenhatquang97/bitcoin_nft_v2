@@ -15,6 +15,7 @@ import (
 
 func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, networkConfig *config.NetworkConfig) (*wire.MsgTx, *btcutil.WIF, error) {
 	defaultAddress, err := utils.GetDefaultAddress(client, networkConfig.SenderAddress, networkConfig.ParamsObject)
+	fmt.Println("sender address: ", networkConfig.SenderAddress)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -34,10 +35,16 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, fmt.Errorf("no utxos")
 	}
 
-	var balance float64
-	for _, item := range sendUtxos {
-		balance += item.Amount
+	//var balance float64
+	//for _, item := range sendUtxos {
+	//	balance += item.Amount
+	//}
+	balance1, err := utils.GetActualBalance(client, networkConfig.SenderAddress)
+	if err != nil {
+		return nil, nil, err
 	}
+
+	balance := float64(balance1)
 
 	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
 
@@ -45,10 +52,12 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, err
 	}
 
+	fmt.Println("Balance is ", balance)
 	// checking for sufficiency of account
 	if networkConfig.Params == "testnet3" && int64(balance*float64(TESTNET_1_BTC)) < amount+DefaultFee {
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	} else if networkConfig.Params == "simnet" && int64(balance) < amount+DefaultFee {
+		fmt.Println("Here is response")
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	}
 
@@ -116,8 +125,8 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	return finalRawTx, wif, nil
 }
 
-func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, data, netConfig)
+func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig, amount int64) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(amount, client, data, netConfig)
 	if err != nil {
 		return nil, nil, err
 	}

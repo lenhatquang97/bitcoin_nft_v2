@@ -66,8 +66,8 @@ func NewRootHashForReceiver(nftData []*NftData) ([]byte, error) {
 	return utils.GetNftRoot(updatedRoot), nil
 }
 
-func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte) (*chainhash.Hash, error) {
-	revealTx, _, err := RevealTx(data, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig)
+func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, toAddress string) (*chainhash.Hash, error) {
+	revealTx, _, err := RevealTx(data, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig, toAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxI
 	return revealTxHash, nil
 }
 
-func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params) (*wire.MsgTx, *btcutil.AddressTaproot, error) {
+func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string) (*wire.MsgTx, *btcutil.AddressTaproot, error) {
 	pubKey := randPriv.PubKey()
 	pkScript, err := utils.CreateInscriptionScript(pubKey, embeddedData)
 
@@ -110,7 +110,13 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 		},
 	})
 
-	opReturnScript, err := txscript.NullDataScript([]byte("https://example.com"))
+	customAddress, err := btcutil.DecodeAddress(toAddress, params)
+	if err != nil {
+		fmt.Println("Decode address error", err)
+		return nil, nil, err
+	}
+
+	opReturnScript, err := txscript.PayToAddrScript(customAddress)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating op return script: %v", err)
 	}
@@ -159,8 +165,8 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	return tx, address, nil
 }
 
-func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(CoinsToSend, client, data, netConfig)
+func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig, amount int64) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(amount, client, data, netConfig)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -193,9 +199,9 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, fmt.Errorf("no utxos")
 	}
 
-	var balance float64
-	for _, item := range sendUtxos {
-		balance += item.Amount
+	balance, err := utils.GetActualBalance(client, networkConfig.SenderAddress)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
@@ -205,7 +211,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	// checking for sufficiency of account
-	if networkConfig.Params == "testnet3" && int64(balance*float64(TESTNET_1_BTC)) < amount+DefaultFee {
+	if networkConfig.Params == "testnet3" && int64(float64(balance)*float64(TESTNET_1_BTC)) < amount+DefaultFee {
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	} else if networkConfig.Params == "simnet" && int64(balance) < amount+DefaultFee {
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
@@ -254,8 +260,8 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	redeemTx.AddTxOut(redeemTxOut)
 
 	var changeCoin int64
-	if networkConfig.Params == "testnet3" && int64(balance*float64(TESTNET_1_BTC)) > amount+DefaultFee {
-		changeCoin = int64(balance*float64(TESTNET_1_BTC)) - amount - DefaultFee
+	if networkConfig.Params == "testnet3" && int64(float64(balance)*float64(TESTNET_1_BTC)) > amount+DefaultFee {
+		changeCoin = int64(float64(balance)*float64(TESTNET_1_BTC)) - amount - DefaultFee
 	} else if networkConfig.Params == "simnet" && int64(balance) > amount+DefaultFee {
 		changeCoin = int64(balance) - amount - DefaultFee
 	}

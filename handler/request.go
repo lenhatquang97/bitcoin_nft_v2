@@ -2,9 +2,10 @@ package handler
 
 // SendRequest Post
 type SendRequest struct {
-	Address string   `json:"address"`
-	Amount  int64    `json:"amount"`
-	Urls    []string `json:"urls"`
+	Address    string   `json:"address"`
+	Passphrase string   `json:"passphrase"`
+	Amount     int64    `json:"amount"`
+	Urls       []string `json:"urls"`
 }
 
 // CheckBalanceRequest Get

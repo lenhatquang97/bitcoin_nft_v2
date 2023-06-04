@@ -5,7 +5,6 @@ import (
 	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/db/sqlc"
 	"bitcoin_nft_v2/nft_tree"
-	"bitcoin_nft_v2/server"
 	"bitcoin_nft_v2/utils"
 	"context"
 	"database/sql"
@@ -46,6 +45,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, 
 
 	return &ServerOffChain{
 		client: client,
+		mode:   mode,
 		Config: networkCfg,
 		DB:     store,
 	}, nil
@@ -55,7 +55,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{}) error {
+func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{}, passphrase string) error {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -68,6 +68,9 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{})
 	var err error
 	if sv.mode == OFF_CHAIN {
 		var nftData []*NftData
+		fmt.Println(data)
+		item := data.([]string)[0]
+		fmt.Println("Item test", item)
 		for _, url := range data.([]string) {
 			item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
 			if err != nil {
@@ -110,7 +113,7 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{})
 	//
 	//fmt.Println("Sender root hash update is: ", rootHashForSender)
 
-	err = sv.client.WalletPassphrase(PassphraseInWallet, PassphraseTimeout)
+	err = sv.client.WalletPassphrase(passphrase, PassphraseTimeout)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -123,7 +126,7 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{})
 		return err
 	}
 
-	commitTxHash, wif, err := server.ExecuteCommitTransaction(sv.client, dataSend, sv.Config)
+	commitTxHash, wif, err := ExecuteCommitTransaction(sv.client, dataSend, sv.Config, amount)
 	if err != nil {
 		fmt.Println("commitLog")
 		fmt.Println(err)
@@ -148,7 +151,7 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{})
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress)
 	if err != nil {
 		fmt.Println(err)
 		return err

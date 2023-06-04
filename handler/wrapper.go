@@ -1,21 +1,36 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+)
 
 func WrapperSend(ctx *gin.Context) {
 	var req SendRequest
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(500, err)
+		fmt.Println(err)
+		return
 	}
 
 	if len(req.Urls) == 0 {
+		fmt.Println(err)
 		ctx.JSON(400, "Nft Url must not be empty")
+		return
 	}
 
-	err = sv.Send(req.Address, req.Amount, req.Urls)
+	if len(req.Passphrase) == 0 {
+		ctx.JSON(400, "Passphrase must not be empty")
+		return
+	}
+
+	// check for mode on chain
+	err = sv.Send(req.Address, req.Amount, req.Urls, req.Passphrase)
 	if err != nil {
+		fmt.Println(err)
 		ctx.JSON(500, err)
+		return
 	}
 
 	ctx.JSON(200, "OK")
@@ -26,15 +41,19 @@ func WrapperImportProof(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(500, err)
+		return
 	}
 
 	if req.ID == "" || req.Url == "" || req.Memo == "" {
 		ctx.JSON(400, "Input invalid")
+		return
 	}
 
 	err = sv.ImportProof(req.ID, req.Url, req.Memo)
 	if err != nil {
+		fmt.Println(err)
 		ctx.JSON(400, err)
+		return
 	}
 
 	ctx.JSON(200, "OK")
@@ -45,15 +64,18 @@ func WrapperExportProof(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(500, err)
+		return
 	}
 
 	if req.Url == "" {
 		ctx.JSON(400, "Input invalid")
+		return
 	}
 
 	data, err := sv.ExportProof(req.Url)
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	ctx.JSON(200, &ExportProofResponse{
@@ -69,18 +91,19 @@ func WrapperExportProof(ctx *gin.Context) {
 
 func WrapperCheckBalance(ctx *gin.Context) {
 	var req CheckBalanceRequest
-	err := ctx.ShouldBindQuery(&req)
+	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(500, err)
 	}
-
 	if req.Address == "" {
 		ctx.JSON(400, "Input invalid")
+		return
 	}
 
 	balance, err := sv.CheckBalance(req.Address)
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	ctx.JSON(200, &CheckBalanceResponse{
@@ -95,11 +118,13 @@ func WrapperViewNftData(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(500, err)
+		return
 	}
 
 	nftData, err := sv.ViewNftData()
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	var items []NftData
@@ -125,15 +150,18 @@ func WrapperSetMode(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	if req.Mode == "" {
 		ctx.JSON(400, "Mode just only is on_chain OR off_chain")
+		return
 	}
 
 	err = sv.SetMode(req.Mode)
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	ctx.JSON(200, "OK")
@@ -144,15 +172,18 @@ func WrapperCreateWallet(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	if req.Name == "" || req.Passphrase == "" {
 		ctx.JSON(400, "Input invalid")
+		return
 	}
 
 	err = sv.CreateWallet(req.Name, req.Passphrase)
 	if err != nil {
 		ctx.JSON(400, err)
+		return
 	}
 
 	ctx.JSON(200, "OK")
