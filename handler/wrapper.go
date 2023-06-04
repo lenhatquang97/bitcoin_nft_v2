@@ -190,13 +190,20 @@ func WrapperCreateWallet(ctx *gin.Context) {
 }
 
 func WrapperGetTx(ctx *gin.Context) {
-	txId, ok := ctx.Params.Get("txId")
-	if !ok {
-		ctx.JSON(400, "Tx id is required")
+
+	var req GetTxRequest
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if req.TxID == "" {
+		fmt.Println(ctx.Params)
+		ctx.JSON(400, "txId is required")
 		return
 	}
 
-	data, err := sv.GetTx(txId)
+	data, err := sv.GetTx(req.TxID)
 	if err != nil {
 		ctx.JSON(400, err.Error())
 	}

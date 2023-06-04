@@ -51,5 +51,5 @@ type Config struct {
 }
 
 type GetTxRequest struct {
-	TxID string `json:"txId"`
+	TxID string `json:"txId" form:"txId"`
 }
