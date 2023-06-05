@@ -66,17 +66,22 @@ func NewRootHashForReceiver(nftData []*NftData) ([]byte, error) {
 	return utils.GetNftRoot(updatedRoot), nil
 }
 
-func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, toAddress string) (*chainhash.Hash, error) {
+func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, toAddress string) (*chainhash.Hash, int64, error) {
 	revealTx, _, err := RevealTx(data, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig, toAddress)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	fee, err := calculateTransactionFee(int64(revealTx.SerializeSize()), 0, 1)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	revealTxHash, err := client.SendRawTransaction(revealTx, true)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return revealTxHash, nil
+	return revealTxHash, fee, nil
 }
 
 func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string) (*wire.MsgTx, *btcutil.AddressTaproot, error) {
@@ -165,17 +170,31 @@ func RevealTx(embeddedData []byte, commitTxHash chainhash.Hash, commitOutput wir
 	return tx, address, nil
 }
 
-func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig, amount int64) (*chainhash.Hash, *btcutil.WIF, error) {
+func calculateTransactionFee(txSize int64, amountToSend int64, feeRate int64) (int64, error) {
+	fee := feeRate * txSize
+
+	if fee >= amountToSend {
+		return 0, fmt.Errorf("fee is greater than or equal to the amount being sent")
+	}
+
+	return fee, nil
+}
+func ExecuteCommitTransaction(client *rpcclient.Client, data []byte, netConfig *config.NetworkConfig, amount int64) (*chainhash.Hash, *btcutil.WIF, int64, error) {
 	commitTx, wif, err := CreateCommitTx(amount, client, data, netConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, err
+	}
+
+	fee, err := calculateTransactionFee(int64(commitTx.SerializeSize()), amount, 1)
+	if err != nil {
+		return nil, nil, 0, err
 	}
 
 	commitTxHash, err := client.SendRawTransaction(commitTx, false)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, err
 	}
-	return commitTxHash, wif, nil
+	return commitTxHash, wif, fee, nil
 }
 
 func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, networkConfig *config.NetworkConfig) (*wire.MsgTx, *btcutil.WIF, error) {

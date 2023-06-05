@@ -52,3 +52,10 @@ b3f0670e72bd7e636b94fc64b6d764e32e369ff86ba55269130c22b91ffeb343
 ```
 SfF7WYPTkHnjx1jKweNYAoFGnhZH1Q2291
 ```
+
+btcwallet --simnet --username=youruser --password=SomeDecentp4ssw0rd --create
+12345
+12345
+n
+n
+OK

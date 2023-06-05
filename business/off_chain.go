@@ -60,7 +60,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{}, passphrase string) error {
+func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{}, passphrase string) (string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -81,7 +81,7 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 			if err != nil {
 				print("Get Nft Data Failed")
 				fmt.Println(err)
-				return err
+				return "", 0, err
 			}
 
 			nftData = append(nftData, &NftData{
@@ -95,14 +95,14 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 		if err != nil {
 			fmt.Println("Compute root hash for receiver error")
 			fmt.Println(err)
-			return err
+			return "", 0, err
 		}
 	} else {
 		var customData string
 		customData, err = FileSha256(data.(string))
 		if err != nil {
 			// log error
-			return err
+			return "", 0, err
 		}
 
 		dataSend = []byte(customData)
@@ -121,21 +121,21 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 	err = sv.client.WalletPassphrase(passphrase, PassphraseTimeout)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", 0, err
 	}
 	fmt.Println("===================================Checkpoint 0====================================")
 
 	//customData, err := offchainnft.FileSha256("./README.md")
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", 0, err
 	}
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(sv.client, dataSend, sv.Config, amount)
+	commitTxHash, wif, fee1, err := ExecuteCommitTransaction(sv.client, dataSend, sv.Config, amount)
 	if err != nil {
 		fmt.Println("commitLog")
 		fmt.Println(err)
-		return err
+		return "", 0, err
 	}
 
 	fmt.Printf("Your commit tx hash is: %s\n", commitTxHash.String())
@@ -143,7 +143,7 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 	retrievedCommitTx, err := sv.client.GetRawTransaction(commitTxHash)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", 0, err
 	}
 
 	fmt.Println("===================================Checkpoint 1====================================")
@@ -156,10 +156,10 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress)
+	revealTxHash, fee2, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", 0, err
 	}
 
 	//txCreator := func(tx *sql.Tx) db.TreeStore {
@@ -192,10 +192,11 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 	//
 	//rootHash := utils.GetNftRoot(updatedRoot)
 	//EmbeddedData = rootHash
+
 	fmt.Println("===================================Checkpoint 2====================================")
 	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
 	fmt.Println("===================================Success====================================")
-	return nil
+	return revealTxHash.String(), fee1 + fee2, nil
 }
 
 func (sv *ServerOffChain) CheckBalance(address string) (int, error) {

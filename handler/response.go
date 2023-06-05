@@ -1,9 +1,14 @@
 package handler
 
+type SendResponseData struct {
+	TxID string `json:"txId"`
+	Fee  int64  `json:"fee"`
+}
+
 type SendResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	// Data ?
+	Code    string           `json:"code"`
+	Message string           `json:"message"`
+	Data    SendResponseData `json:"data"`
 }
 
 type CheckBalanceResponse struct {

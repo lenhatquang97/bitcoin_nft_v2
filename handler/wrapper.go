@@ -26,14 +26,21 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	err = sv.Send(req.Address, req.Amount, req.Urls, req.Passphrase)
+	txId, fee, err := sv.Send(req.Address, req.Amount, req.Urls, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, err)
 		return
 	}
 
-	ctx.JSON(200, "OK")
+	ctx.JSON(200, &SendResponse{
+		Code:    "200",
+		Message: "OK",
+		Data: SendResponseData{
+			TxID: txId,
+			Fee:  fee,
+		},
+	})
 }
 
 func WrapperImportProof(ctx *gin.Context) {
