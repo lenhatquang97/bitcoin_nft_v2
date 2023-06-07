@@ -12,12 +12,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
+	"github.com/btcsuite/btcd/rpcclient"
 	"os"
 	"os/exec"
-	"time"
-
-	"github.com/btcsuite/btcd/rpcclient"
 )
 
 const (
@@ -254,49 +251,23 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 }
 
 func (sv *Server) CreateWallet(name string, passphrase string) error {
-	//res, err := sv.client.CreateWallet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
+	//res, err := sv.client.CreateW	allet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
 	//if err != nil {
 	//	return err
 	//}
 
-	app := "btcwallet"
-
-	arg0 := "--simnet"
-	arg1 := "--username=" + sv.Config.User
-	arg2 := "--password=" + sv.Config.Pass
-	arg3 := "--create"
-
-	cmd := exec.Command(app, arg0, arg1, arg2, arg3)
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-
-	go func() {
-		time.Sleep(1 * time.Second)
-		io.WriteString(os.Stdin, "12345\n")
-		time.Sleep(1 * time.Second)
-
-		io.WriteString(os.Stdin, "12345\n")
-		time.Sleep(1 * time.Second)
-
-		io.WriteString(os.Stdin, "n\n")
-		time.Sleep(1 * time.Second)
-
-		io.WriteString(os.Stdin, "n\n")
-		time.Sleep(1 * time.Second)
-
-		io.WriteString(os.Stdin, "OK\n")
-
-		//time.Sleep(5 * time.Second)
-		//io.WriteString(os.Stdin, "echo hello again\n")
-	}()
-
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("Error run ", err)
-		return err
+	cmd := &exec.Cmd{
+		Path:   "./create_wallet_result.exp",
+		Stderr: os.Stderr,
 	}
 
-	return nil
+	output, err := cmd.Output()
+	fmt.Println(err)
+	fmt.Println(string(output))
+
+	err = os.WriteFile("test_result.txt", output, 0666)
+
+	return err
 }
 
 func (sv *Server) GetNftData() {
