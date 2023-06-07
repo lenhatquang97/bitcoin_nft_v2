@@ -5,6 +5,7 @@ type SendRequest struct {
 	Address    string   `json:"address"`
 	Passphrase string   `json:"passphrase"`
 	Amount     int64    `json:"amount"`
+	IsRef      bool     `json:"isRef"`
 	Urls       []string `json:"urls"`
 }
 

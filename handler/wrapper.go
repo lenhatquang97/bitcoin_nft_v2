@@ -26,7 +26,7 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	txId, fee, err := sv.Send(req.Address, req.Amount, req.Urls, req.Passphrase)
+	txId, fee, err := sv.Send(req.Address, req.Amount, req.IsRef, req.Urls, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, err)

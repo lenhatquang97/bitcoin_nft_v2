@@ -59,7 +59,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, amount int64, data interface{}, passphrase string) (string, int64, error) {
+func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interface{}, passphrase string) (string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -98,7 +98,12 @@ func (sv *Server) Send(toAddress string, amount int64, data interface{}, passphr
 		}
 	} else {
 		var customData string
-		customData, err = FileSha256(data.(string))
+		if isRef {
+			customData, err = RawDataEncode(data.(string))
+		} else {
+			customData, err = FileSha256(data.(string))
+		}
+
 		if err != nil {
 			// log error
 			return "", 0, err

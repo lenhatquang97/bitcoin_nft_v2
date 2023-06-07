@@ -320,3 +320,13 @@ func FileSha256(filePath string) (string, error) {
 	return hex.EncodeToString(hashSum), nil
 
 }
+
+func RawDataEncode(data string) (string, error) {
+	// Create a new SHA256 hash
+	hash := sha256.New()
+	hash.Write([]byte(data))
+
+	// Get the hash sum as a byte slice
+	hashSum := hash.Sum(nil)
+	return hex.EncodeToString(hashSum), nil
+}
