@@ -15,6 +15,7 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -22,6 +23,9 @@ const (
 	PassphraseTimeout  = 3
 	ON_CHAIN           = "on_chain"
 	OFF_CHAIN          = "off_chain"
+	USER_PASWORD       = "user_password"
+	LEFT_STR           = "Your wallet generation seed is:"
+	RIGHT_STR          = "IMPORTANT: Keep the seed in a safe place as you"
 )
 
 type Server struct {
@@ -94,7 +98,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interface{}, passphrase string) (string, int64, error) {
+func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -105,17 +109,47 @@ func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interfac
 	// Get Nft Data
 	var dataSend []byte
 	var err error
-	if sv.mode == OFF_CHAIN {
-		dataSend, err = sv.GetDataSendOffChain(data, isRef)
-		if err != nil {
-			fmt.Println("Compute root hash for receiver error")
-			fmt.Println(err)
-			return "", 0, err
-		}
-	} else {
-		dataSend, err = sv.GetDataSendOnChain(data, isRef)
-		if err != nil {
-			return "", 0, err
+	if isSendNft {
+		if sv.mode == OFF_CHAIN {
+			var nftData []*NftData
+			fmt.Println(data)
+			item := data.([]string)[0]
+			fmt.Println("Item test", item)
+			for _, url := range data.([]string) {
+				item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
+				if err != nil {
+					print("Get Nft Data Failed")
+					fmt.Println(err)
+					return "", 0, err
+				}
+
+				nftData = append(nftData, &NftData{
+					ID:   item.ID,
+					Url:  item.Url,
+					Memo: item.Memo,
+				})
+			}
+
+			dataSend, err = NewRootHashForReceiver(nftData)
+			if err != nil {
+				fmt.Println("Compute root hash for receiver error")
+				fmt.Println(err)
+				return "", 0, err
+			}
+		} else {
+			var customData string
+			if isRef {
+				customData, err = RawDataEncode(data.(string))
+			} else {
+				customData, err = FileSha256(data.(string))
+			}
+
+			if err != nil {
+				// log error
+				return "", 0, err
+			}
+
+			dataSend = []byte(customData)
 		}
 	}
 
@@ -250,11 +284,27 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 	return res, nil
 }
 
-func (sv *Server) CreateWallet(name string, passphrase string) error {
+func (sv *Server) CreateWallet(passphrase string) (string, error) {
 	//res, err := sv.client.CreateW	allet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
 	//if err != nil {
 	//	return err
 	//}
+
+	data, err := os.ReadFile("./template_create_wallet.exp")
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	dataStr := string(data)
+
+	res := strings.Replace(dataStr, USER_PASWORD, passphrase, -1)
+
+	err = os.WriteFile("create_wallet_result.exp", []byte(res), 0666)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 
 	cmd := &exec.Cmd{
 		Path:   "./create_wallet_result.exp",
@@ -265,9 +315,20 @@ func (sv *Server) CreateWallet(name string, passphrase string) error {
 	fmt.Println(err)
 	fmt.Println(string(output))
 
-	err = os.WriteFile("test_result.txt", output, 0666)
+	resStr := string(output)
+	l := strings.Index(resStr, LEFT_STR)
+	r := strings.Index(resStr, RIGHT_STR)
 
-	return err
+	if l+len(LEFT_STR) > r {
+		return "", errors.New("Seed is empty")
+	}
+
+	err = os.Remove("./create_wallet_result.exp")
+	if err != nil {
+		return "", err
+	}
+
+	return resStr[l+len(LEFT_STR) : r], err
 }
 
 func (sv *Server) GetNftData() {
