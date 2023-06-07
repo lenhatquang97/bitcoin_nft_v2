@@ -11,11 +11,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/rpcclient"
 	"io"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/btcsuite/btcd/rpcclient"
 )
 
 const (
@@ -212,7 +213,8 @@ func (sv *Server) CheckBalance(address string) (int, error) {
 
 	for i := 0; i < len(utxos); i++ {
 		if utxos[i].Address == address {
-			amount += int(utxos[i].Amount)
+			//100_000_000 is because it's testnet
+			amount += int(utxos[i].Amount * 100_000_000)
 		}
 	}
 	return amount, nil
