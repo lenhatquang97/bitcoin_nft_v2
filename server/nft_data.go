@@ -109,8 +109,8 @@ func (sv *Server) NewRootHashForReceiver(nftData []*NftData) ([]byte, error) {
 	return utils.GetNftRoot(updatedRoot), nil
 }
 
-func (sv *Server) PreComputeRootHashForSender(ctx context.Context, key [32]byte, leaf *nft_tree.LeafNode, nameSpace string) ([]byte, error) {
-	updatedTree, err := common.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, nameSpace)
+func (sv *Server) PreComputeRootHashForSender(ctx context.Context, key [32]byte, leaf *nft_tree.LeafNode) ([]byte, error) {
+	updatedTree, err := common.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB)
 	if err != nil {
 		return nil, err
 	}

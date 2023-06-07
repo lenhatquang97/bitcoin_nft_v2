@@ -13,7 +13,6 @@ func (sv *Server) DoCommitRevealTransaction(netConfig *config.NetworkConfig) {
 		"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
 		"https://amnhacvietthanh.vn/wp-content/uploads/2020/10/Yamaha-C40.jpg",
 	}
-	//nameSpace := DefaultNameSpace
 
 	// Get Nft Data
 	nftData, err := sv.GetNftDataByUrl(context.Background(), nftUrls)

@@ -19,7 +19,7 @@ const (
 	SIMNET    = "simnet"
 )
 
-var sv *business.ServerOffChain
+var sv *business.Server
 
 var SimNetConfig = config.NetworkConfig{
 	Host:          "localhost:18554",
@@ -44,7 +44,7 @@ var TestNetConfig = config.NetworkConfig{
 	SenderAddress: "mntb2RxQhyXqXRZV5GE1bDkP6615EPXLHF",
 }
 
-func Init(conf config.NetworkConfig, mode string) (*business.ServerOffChain, error) {
+func Init(conf config.NetworkConfig, mode string) (*business.Server, error) {
 	var err error
 	sv, err = business.NewServer(&conf, mode)
 	if err != nil {

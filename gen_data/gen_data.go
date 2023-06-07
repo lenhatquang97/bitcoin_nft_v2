@@ -10,10 +10,6 @@ import (
 	"math/rand"
 )
 
-const (
-	namespace = "default"
-)
-
 // func test to export nft
 func ImportNewNftData(url string, memo string) {
 	sv, err := server.InitServer()

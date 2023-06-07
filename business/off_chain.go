@@ -19,21 +19,20 @@ import (
 )
 
 const (
-	DefaultNameSpace   = "default"
 	PassphraseInWallet = "12345"
 	PassphraseTimeout  = 3
 	ON_CHAIN           = "on_chain"
 	OFF_CHAIN          = "off_chain"
 )
 
-type ServerOffChain struct {
+type Server struct {
 	client *rpcclient.Client
 	mode   string
 	Config *config.NetworkConfig
 	DB     *db.PostgresStore
 }
 
-func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, error) {
+func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	client, err := utils.GetBitcoinWalletRpcClient("btcwallet", networkCfg)
 	if err != nil {
 		return nil, err
@@ -48,7 +47,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, 
 		}
 	}
 
-	return &ServerOffChain{
+	return &Server{
 		client: client,
 		mode:   mode,
 		Config: networkCfg,
@@ -60,7 +59,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*ServerOffChain, 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{}, passphrase string) (string, int64, error) {
+func (sv *Server) Send(toAddress string, amount int64, data interface{}, passphrase string) (string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -199,7 +198,7 @@ func (sv *ServerOffChain) Send(toAddress string, amount int64, data interface{},
 	return revealTxHash.String(), fee1 + fee2, nil
 }
 
-func (sv *ServerOffChain) CheckBalance(address string) (int, error) {
+func (sv *Server) CheckBalance(address string) (int, error) {
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
 		return -1, err
@@ -214,7 +213,7 @@ func (sv *ServerOffChain) CheckBalance(address string) (int, error) {
 	return amount, nil
 }
 
-func (sv *ServerOffChain) ViewNftData() ([]*NftData, error) {
+func (sv *Server) ViewNftData() ([]*NftData, error) {
 	// get nft data from db
 	if sv.mode != OFF_CHAIN {
 		return nil, errors.New("SERVER_MODE_IS_ON_CHAIN")
@@ -240,7 +239,7 @@ func (sv *ServerOffChain) ViewNftData() ([]*NftData, error) {
 	return res, nil
 }
 
-func (sv *ServerOffChain) CreateWallet(name string, passphrase string) error {
+func (sv *Server) CreateWallet(name string, passphrase string) error {
 	//res, err := sv.client.CreateWallet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
 	//if err != nil {
 	//	return err
@@ -286,11 +285,11 @@ func (sv *ServerOffChain) CreateWallet(name string, passphrase string) error {
 	return nil
 }
 
-func (sv *ServerOffChain) GetNftData() {
+func (sv *Server) GetNftData() {
 
 }
 
-func (sv *ServerOffChain) ImportProof(id, url, memo string) error {
+func (sv *Server) ImportProof(id, url, memo string) error {
 	if sv.mode != OFF_CHAIN {
 		return errors.New("SERVER_MODE_IS_ON_CHAIN")
 	}
@@ -312,7 +311,7 @@ func (sv *ServerOffChain) ImportProof(id, url, memo string) error {
 
 	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.DB, txCreator)
 
-	taroTreeStore := db.NewTaroTreeStore(treeDB, DefaultNameSpace)
+	taroTreeStore := db.NewTaroTreeStore(treeDB)
 
 	tree := nft_tree.NewFullTree(taroTreeStore)
 
@@ -346,7 +345,7 @@ func (sv *ServerOffChain) ImportProof(id, url, memo string) error {
 	return err
 }
 
-func (sv *ServerOffChain) ExportProof(url string) (*NftData, error) {
+func (sv *Server) ExportProof(url string) (*NftData, error) {
 	if sv.mode != OFF_CHAIN {
 		return nil, errors.New("SERVER_MODE_IS_ON_CHAIN")
 	}
@@ -380,7 +379,7 @@ func (sv *ServerOffChain) ExportProof(url string) (*NftData, error) {
 	return nftDataRes, nil
 }
 
-func (sv *ServerOffChain) SetMode(mode string) error {
+func (sv *Server) SetMode(mode string) error {
 	if mode != ON_CHAIN && mode != OFF_CHAIN {
 		return WrapperError("MODE_INVALID")
 	}
@@ -389,7 +388,7 @@ func (sv *ServerOffChain) SetMode(mode string) error {
 	return nil
 }
 
-func (sv *ServerOffChain) GetTx(txId string) (interface{}, error) {
+func (sv *Server) GetTx(txId string) (interface{}, error) {
 	//using a struct literal
 	bc := gobcy.API{"0e3279a9ec4e4859ba55945c6a29a6ec", "btc", "test3"}
 

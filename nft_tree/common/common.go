@@ -6,8 +6,8 @@ import (
 	"context"
 )
 
-func LoadTreeIntoMemoryByNameSpace(ctx context.Context, postgresDB *db.PostgresStore, namespace string) (*nft_tree.CompactedTree, error) {
-	res, err := postgresDB.GetAllNodeByNameSpace(ctx, namespace)
+func LoadTreeIntoMemoryByNameSpace(ctx context.Context, postgresDB *db.PostgresStore) (*nft_tree.CompactedTree, error) {
+	res, err := postgresDB.GetAllNodeByNameSpace(ctx)
 	if err != nil {
 		return nil, err
 	}

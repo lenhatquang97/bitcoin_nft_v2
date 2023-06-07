@@ -11,10 +11,6 @@ import (
 	"fmt"
 )
 
-const (
-	DefaultNameSpace = "default"
-)
-
 func (sv *Server) ImportProof(ctx context.Context, id, url, memo string) error {
 	// import nft data and merge tree
 	dataByte, key := sv.ComputeNftDataByte(&NftData{
@@ -33,7 +29,7 @@ func (sv *Server) ImportProof(ctx context.Context, id, url, memo string) error {
 
 	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.PostgresDB, txCreator)
 
-	taroTreeStore := db.NewTaroTreeStore(treeDB, DefaultNameSpace)
+	taroTreeStore := db.NewTaroTreeStore(treeDB)
 
 	tree := nft_tree.NewFullTree(taroTreeStore)
 
@@ -102,7 +98,7 @@ func (sv *Server) VerifyDataInTree(ctx context.Context, rootHash []byte, nftData
 	leaf.NodeHash()
 
 	// check name space or merge all namespace into one?
-	updatedTree, err := common.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB, "default")
+	updatedTree, err := common.LoadTreeIntoMemoryByNameSpace(ctx, sv.PostgresDB)
 	if err != nil {
 		return false, err
 	}
