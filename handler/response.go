@@ -1,8 +1,9 @@
 package handler
 
 type SendResponseData struct {
-	TxID string `json:"txId"`
-	Fee  int64  `json:"fee"`
+	RevealTxID string `json:"revealTxId"`
+	CommitTxID string `json:"commitTxId"`
+	Fee        int64  `json:"fee"`
 }
 
 type SendResponse struct {

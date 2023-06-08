@@ -39,7 +39,7 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	txId, fee, err := sv.Send(req.Address, req.Amount, req.IsSendNFT, req.IsRef, req.Urls, req.Passphrase)
+	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.Amount, req.IsSendNFT, req.IsRef, req.Urls, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))
@@ -50,8 +50,9 @@ func WrapperSend(ctx *gin.Context) {
 		Code:    200,
 		Message: "OK",
 		Data: SendResponseData{
-			TxID: txId,
-			Fee:  fee,
+			CommitTxID: commitTxId,
+			RevealTxID: revealTxId,
+			Fee:        fee,
 		},
 	})
 }

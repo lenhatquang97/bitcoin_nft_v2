@@ -98,7 +98,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, int64, error) {
+func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -120,7 +120,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 				if err != nil {
 					print("Get Nft Data Failed")
 					fmt.Println(err)
-					return "", 0, err
+					return "", "", 0, err
 				}
 
 				nftData = append(nftData, &NftData{
@@ -134,7 +134,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 			if err != nil {
 				fmt.Println("Compute root hash for receiver error")
 				fmt.Println(err)
-				return "", 0, err
+				return "", "", 0, err
 			}
 		} else {
 			var customData string
@@ -146,7 +146,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 
 			if err != nil {
 				// log error
-				return "", 0, err
+				return "", "", 0, err
 			}
 
 			dataSend = []byte(customData)
@@ -156,29 +156,29 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	//Step 2: Open passphrase
 	err = sv.client.WalletPassphrase(passphrase, PassphraseTimeout)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	//Step 3: Calculate fee (commit and revealTxFee)
 	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	if amount <= estimatedCommitTxFee+estimatedRevealTxFee {
 		fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
 		fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
-		return "", 0, fmt.Errorf("estimated fee is: %d", estimatedCommitTxFee+estimatedRevealTxFee)
+		return "", "", 0, fmt.Errorf("estimated fee is: %d", estimatedCommitTxFee+estimatedRevealTxFee)
 	}
 
 	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, amount, estimatedCommitTxFee)
 	if err != nil {
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	fmt.Printf("Your commit tx hash is: %s\n", commitTxHash.String())
@@ -186,7 +186,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	retrievedCommitTx, err := sv.client.GetRawTransaction(commitTxHash)
 	if err != nil {
 		fmt.Println(err)
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	fmt.Println("===================================Checkpoint 1====================================")
@@ -202,7 +202,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress, estimatedRevealTxFee)
 	if err != nil {
 		fmt.Println(err)
-		return "", 0, err
+		return "", "", 0, err
 	}
 
 	//txCreator := func(tx *sql.Tx) db.TreeStore {
@@ -239,7 +239,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	fmt.Println("===================================Checkpoint 2====================================")
 	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
 	fmt.Println("===================================Success====================================")
-	return revealTxHash.String(), estimatedCommitTxFee + estimatedRevealTxFee, nil
+	return commitTxHash.String(), revealTxHash.String(), estimatedCommitTxFee + estimatedRevealTxFee, nil
 }
 
 func (sv *Server) CheckBalance(address string) (int, error) {
