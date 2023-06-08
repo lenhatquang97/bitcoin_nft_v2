@@ -42,23 +42,24 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 	}
 	var body = make([]byte, 0)
 	if validPosition != -1 {
-		multipleIndexes := utils.FindMultiplePartsOfByteArray([]byte(CONTENT_TAG), embeddedData)
-		for i := 0; i < len(multipleIndexes)-1; i++ {
-			startChunkWithPadding := multipleIndexes[i] + len([]byte(CONTENT_TAG))
-			endChunk := multipleIndexes[i+1] - GetPaddingInAddData([]byte(CONTENT_TAG))
-			padding := GetPaddingInAddData(embeddedData[startChunkWithPadding:endChunk])
-			actualStartChunk := startChunkWithPadding + padding
-			actualEndChunk := endChunk
-			body = append(body, embeddedData[actualStartChunk:actualEndChunk]...)
+		startBodyPos := utils.FindStartOfByteArray([]byte("m25start"), embeddedData) + len([]byte("m25start"))
+		endBodyPos := startBodyPos + 500
+		if startBodyPos == -1 {
+			return nil
 		}
-		startChunkWithPadding := multipleIndexes[len(multipleIndexes)-1] + len([]byte(CONTENT_TAG))
-		endChunk := len(embeddedData) - 1
-		padding := GetPaddingInAddData(embeddedData[startChunkWithPadding:endChunk])
 
-		actualStartBody := startChunkWithPadding + padding
-		actualEndBody := endChunk
-		body = append(body, embeddedData[actualStartBody:actualEndBody]...)
-		return body
+		if endBodyPos < len(embeddedData) {
+			for endBodyPos < len(embeddedData) {
+				body = append(body, embeddedData[startBodyPos:endBodyPos]...)
+				padding := GetPaddingInAddData(embeddedData[startBodyPos:endBodyPos])
+				startBodyPos = endBodyPos + padding
+				endBodyPos = startBodyPos + 500
+			}
+			finalBodyPos := utils.FindStartOfByteArrayFromEnd([]byte("m25end"), embeddedData, len(embeddedData)-1)
+			body = append(body, embeddedData[startBodyPos:finalBodyPos]...)
+		} else {
+			body = append(body, embeddedData[startBodyPos:len(embeddedData)-1]...)
+		}
 	}
-	return nil
+	return body
 }

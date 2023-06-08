@@ -4,6 +4,7 @@ import (
 	"bitcoin_nft_v2/nft_tree"
 	"crypto/sha256"
 	"encoding/binary"
+
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"
@@ -29,10 +30,21 @@ func CreateInscriptionScript(pubKey *secp256k1.PublicKey, embeddedData []byte) (
 	builder.AddOp(txscript.OP_CHECKSIG)
 	builder.AddOp(txscript.OP_0)
 	builder.AddOp(txscript.OP_IF)
-	chunks := ChunkSlice(embeddedData, 520)
-	for _, chunk := range chunks {
-		builder.AddFullData([]byte("m25"))
-		builder.AddFullData(chunk)
+	chunks := ChunkSlice(embeddedData, 500)
+	for i, chunk := range chunks {
+		if i == 0 {
+			var tmp []byte
+			tmp = append(tmp, []byte("m25start")...)
+			tmp = append(tmp, chunk...)
+			builder.AddFullData(tmp)
+		} else if i == len(chunks)-1 {
+			var tmp []byte
+			tmp = append(tmp, chunk...)
+			tmp = append(tmp, []byte("m25end")...)
+			builder.AddFullData(tmp)
+		} else {
+			builder.AddFullData(chunk)
+		}
 	}
 	hashLockScript, err := builder.Script()
 	if err != nil {

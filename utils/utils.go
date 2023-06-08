@@ -31,6 +31,42 @@ func LoadCerts(baseFolder string) ([]byte, error) {
 	return certs, nil
 }
 
+func FindStartOfByteArray(part []byte, array []byte) int {
+	m := len(array)
+	n := len(part)
+	for i := 0; i <= m-n; i++ {
+		found := true
+		for j := 0; j < n; j++ {
+			if array[i+j] != part[j] {
+				found = false
+				break
+			}
+		}
+		if found {
+			return i
+		}
+	}
+	return -1
+}
+
+// Find first occurence of part in array from end index
+func FindStartOfByteArrayFromEnd(part []byte, array []byte, end int) int {
+	n := len(part)
+	for i := end; i >= 0; i-- {
+		found := true
+		for j := 0; j < n; j++ {
+			if array[i+j] != part[j] {
+				found = false
+				break
+			}
+		}
+		if found {
+			return i
+		}
+	}
+	return -1
+}
+
 func FindMultiplePartsOfByteArray(part []byte, array []byte) []int {
 	m := len(part)
 	n := len(array)

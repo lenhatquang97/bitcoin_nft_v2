@@ -8,13 +8,13 @@ import (
 )
 
 func DoFirstTestCaseWithPNG() {
-	embeddedData, err := PrepareInscriptionData("./test.png")
+	embeddedData, err := PrepareInscriptionData("./README.md")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	body := DeserializeWitnessDataIntoInscription(embeddedData)
-	WriteData(body, "./final.png")
+	WriteData(body, "./GG.md")
 }
 func DoSecondTestCaseWithText() {
 	privKey, _ := btcec.NewPrivateKey()
