@@ -57,6 +57,42 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	}, nil
 }
 
+func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data interface{}, passphrase string) (int64, error) {
+	var dataSend []byte
+	var err error
+	if sv.mode == OFF_CHAIN {
+		dataSend, err = sv.GetDataSendOffChain(data, isRef)
+		if err != nil {
+			fmt.Println("Compute root hash for receiver error")
+			fmt.Println(err)
+			return 0, err
+		}
+	} else {
+		dataSend, err = sv.GetDataSendOnChain(data, isRef)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	//Step 2: Open passphrase
+	err = sv.client.WalletPassphrase(passphrase, PassphraseTimeout)
+	if err != nil {
+		return 0, err
+	}
+
+	//Step 3: Calculate fee (commit and revealTxFee)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
+	if err != nil {
+		return 0, err
+	}
+
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
+	if err != nil {
+		return 0, err
+	}
+	return estimatedCommitTxFee + estimatedRevealTxFee, nil
+}
+
 // Send
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
@@ -73,33 +109,14 @@ func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interfac
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
-		var nftData []*NftData
-		fmt.Println(data)
-		item := data.([]string)[0]
-		fmt.Println("Item test", item)
-		for _, url := range data.([]string) {
-			item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
-			if err != nil {
-				print("Get Nft Data Failed")
-				fmt.Println(err)
-				return "", 0, err
-			}
-
-			nftData = append(nftData, &NftData{
-				ID:   item.ID,
-				Url:  item.Url,
-				Memo: item.Memo,
-			})
-		}
-
-		dataSend, err = NewRootHashForReceiver(nftData)
+		dataSend, err = sv.GetDataSendOffChain(data, isRef)
 		if err != nil {
 			fmt.Println("Compute root hash for receiver error")
 			fmt.Println(err)
 			return "", 0, err
 		}
 	} else {
-		dataSend, err = sv.GetDataSend(data, isRef)
+		dataSend, err = sv.GetDataSendOnChain(data, isRef)
 		if err != nil {
 			return "", 0, err
 		}
@@ -405,8 +422,36 @@ func (sv *Server) GetTx(txId string) (interface{}, error) {
 	//bc.CreateWallet()
 	//fmt.Println(bc.GetBlock(300000, "", nil))
 }
+func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, error) {
+	var nftData []*NftData
+	fmt.Println(data)
+	item := data.([]string)[0]
+	fmt.Println("Item test", item)
+	for _, url := range data.([]string) {
+		item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
+		if err != nil {
+			print("Get Nft Data Failed")
+			fmt.Println(err)
+			return nil, err
+		}
 
-func (sv *Server) GetDataSend(data interface{}, isRef bool) ([]byte, error) {
+		nftData = append(nftData, &NftData{
+			ID:   item.ID,
+			Url:  item.Url,
+			Memo: item.Memo,
+		})
+	}
+
+	dataSend, err := NewRootHashForReceiver(nftData)
+	if err != nil {
+		fmt.Println("Compute root hash for receiver error")
+		fmt.Println(err)
+		return nil, err
+	}
+	return dataSend, nil
+}
+
+func (sv *Server) GetDataSendOnChain(data interface{}, isRef bool) ([]byte, error) {
 	if isRef {
 		customData, err := RawDataEncode(data.([]string)[0])
 		if err != nil {

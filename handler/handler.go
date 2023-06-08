@@ -5,11 +5,12 @@ import (
 	"bitcoin_nft_v2/config"
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/gin-gonic/gin"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -56,6 +57,7 @@ func Init(conf config.NetworkConfig, mode string) (*business.Server, error) {
 
 func RegisterRoutes(rg *gin.RouterGroup) {
 	router := rg.Group("/btc_nft")
+	router.POST("/predefine", WrapperPredefineEstimatedFee)
 	router.POST("/send", WrapperSend)
 	router.POST("/import", WrapperImportProof)
 	router.POST("/wallet", WrapperCreateWallet)

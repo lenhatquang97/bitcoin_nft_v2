@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,6 +42,37 @@ func WrapperSend(ctx *gin.Context) {
 			Fee:  fee,
 		},
 	})
+}
+
+func WrapperPredefineEstimatedFee(ctx *gin.Context) {
+	var req SendRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(500, err)
+		fmt.Println(err)
+		return
+	}
+
+	if len(req.Urls) == 0 {
+		fmt.Println(err)
+		ctx.JSON(400, "Nft Url must not be empty")
+		return
+	}
+
+	if len(req.Passphrase) == 0 {
+		ctx.JSON(400, "Passphrase must not be empty")
+		return
+	}
+
+	// check for mode on chain
+	fee, err := sv.CalculateFee(req.Address, req.Amount, req.IsRef, req.Urls, req.Passphrase)
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(500, err)
+		return
+	}
+
+	ctx.JSON(200, fee)
 }
 
 func WrapperImportProof(ctx *gin.Context) {
