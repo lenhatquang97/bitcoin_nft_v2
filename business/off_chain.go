@@ -9,6 +9,7 @@ import (
 	"bitcoin_nft_v2/utils"
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -98,48 +99,37 @@ func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interfac
 			return "", 0, err
 		}
 	} else {
-		var customData string
-		if isRef {
-			customData, err = RawDataEncode(data.(string))
-		} else {
-			customData, err = FileSha256(data.(string))
-		}
-
+		dataSend, err = sv.GetDataSend(data, isRef)
 		if err != nil {
-			// log error
 			return "", 0, err
 		}
-
-		dataSend = []byte(customData)
 	}
 
-	// root hash for sender
-	//rootHashForSender, err := sv.PreComputeRootHashForSender(context.Background(), key, leaf, nameSpace)
-	//if err != nil {
-	//	fmt.Println("Compute root hash for sender error")
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//fmt.Println("Sender root hash update is: ", rootHashForSender)
-
+	//Step 2: Open passphrase
 	err = sv.client.WalletPassphrase(passphrase, PassphraseTimeout)
 	if err != nil {
-		fmt.Println(err)
-		return "", 0, err
-	}
-	fmt.Println("===================================Checkpoint 0====================================")
-
-	//customData, err := offchainnft.FileSha256("./README.md")
-	if err != nil {
-		fmt.Println(err)
 		return "", 0, err
 	}
 
-	commitTxHash, wif, fee1, err := ExecuteCommitTransaction(sv.client, dataSend, sv.Config, amount)
+	//Step 3: Calculate fee (commit and revealTxFee)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
 	if err != nil {
-		fmt.Println("commitLog")
-		fmt.Println(err)
+		return "", 0, err
+	}
+
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
+	if err != nil {
+		return "", 0, err
+	}
+
+	if amount <= estimatedCommitTxFee+estimatedRevealTxFee {
+		fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
+		fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
+		return "", 0, fmt.Errorf("estimated fee is: %d", estimatedCommitTxFee+estimatedRevealTxFee)
+	}
+
+	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, amount, estimatedCommitTxFee)
+	if err != nil {
 		return "", 0, err
 	}
 
@@ -161,7 +151,7 @@ func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interfac
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, fee2, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress, estimatedRevealTxFee)
 	if err != nil {
 		fmt.Println(err)
 		return "", 0, err
@@ -201,7 +191,7 @@ func (sv *Server) Send(toAddress string, amount int64, isRef bool, data interfac
 	fmt.Println("===================================Checkpoint 2====================================")
 	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
 	fmt.Println("===================================Success====================================")
-	return revealTxHash.String(), fee1 + fee2, nil
+	return revealTxHash.String(), estimatedCommitTxFee + estimatedRevealTxFee, nil
 }
 
 func (sv *Server) CheckBalance(address string) (int, error) {
@@ -316,7 +306,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 		return sv.DB.WithTx(tx)
 	}
 
-	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.DB, txCreator)
+	treeDB := db.NewTransactionExecutor(sv.DB, txCreator)
 
 	taroTreeStore := db.NewTaroTreeStore(treeDB)
 
@@ -397,7 +387,7 @@ func (sv *Server) SetMode(mode string) error {
 
 func (sv *Server) GetTx(txId string) (interface{}, error) {
 	//using a struct literal
-	bc := gobcy.API{"0e3279a9ec4e4859ba55945c6a29a6ec", "btc", "test3"}
+	bc := gobcy.API{Token: "0e3279a9ec4e4859ba55945c6a29a6ec", Coin: "btc", Chain: "test3"}
 
 	//query away
 	fmt.Println(bc.GetChain())
@@ -414,4 +404,21 @@ func (sv *Server) GetTx(txId string) (interface{}, error) {
 	//fmt.Println(res)
 	//bc.CreateWallet()
 	//fmt.Println(bc.GetBlock(300000, "", nil))
+}
+
+func (sv *Server) GetDataSend(data interface{}, isRef bool) ([]byte, error) {
+	if isRef {
+		customData, err := RawDataEncode(data.([]string)[0])
+		if err != nil {
+			return nil, err
+		}
+
+		return []byte(customData), nil
+	} else {
+		dataSend, err := hex.DecodeString(data.([]string)[0])
+		if err != nil {
+			return nil, err
+		}
+		return dataSend, nil
+	}
 }

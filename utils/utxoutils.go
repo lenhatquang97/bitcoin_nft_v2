@@ -46,7 +46,8 @@ func GetActualBalance(client *rpcclient.Client, actualAddress string) (int, erro
 
 	for i := 0; i < len(utxos); i++ {
 		if utxos[i].Address == actualAddress {
-			amount += int(utxos[i].Amount)
+			//Note: This is balance for testnet
+			amount += int(utxos[i].Amount * 100_000_000)
 		}
 	}
 	return amount, nil

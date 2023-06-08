@@ -2,6 +2,8 @@ package main
 
 import (
 	"bitcoin_nft_v2/handler"
+	"encoding/hex"
+	"fmt"
 	"log"
 	"os"
 )
@@ -38,4 +40,16 @@ func main() {
 		Password:      os.Args[PASSWORD],
 		SenderAddress: os.Args[SENDER_ADDRESS],
 	})
+}
+
+func SampleFile() {
+	file, err := os.ReadFile("./sample.jpg")
+	if err != nil {
+		fmt.Println("Error 1")
+		return
+	}
+	//Convert bytes to string
+	str := hex.EncodeToString(file)
+	fmt.Println("Done")
+	fmt.Println(str)
 }
