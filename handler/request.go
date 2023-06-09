@@ -8,6 +8,7 @@ type SendRequest struct {
 	IsSendNFT  bool     `json:"isSendNft"`
 	IsRef      bool     `json:"isRef"`
 	Urls       []string `json:"urls"`
+	NumBlocks  int64    `json:"numBlocks"`
 }
 
 // CheckBalanceRequest Get

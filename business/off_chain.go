@@ -12,10 +12,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/rpcclient"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/btcsuite/btcd/rpcclient"
 )
 
 const (
@@ -58,7 +59,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	}, nil
 }
 
-func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data interface{}, passphrase string) (int64, error) {
+func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data interface{}, passphrase string, numBlocks int64) (int64, error) {
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
@@ -82,12 +83,12 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 	}
 
 	//Step 3: Calculate fee (commit and revealTxFee)
-	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount, numBlocks)
 	if err != nil {
 		return 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress, numBlocks)
 	if err != nil {
 		return 0, err
 	}
@@ -98,7 +99,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, string, int64, error) {
+func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef bool, data interface{}, passphrase string, numBlocks int64) (string, string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -160,12 +161,12 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	}
 
 	//Step 3: Calculate fee (commit and revealTxFee)
-	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount, numBlocks)
 	if err != nil {
 		return "", "", 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress, numBlocks)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -320,7 +321,7 @@ func (sv *Server) CreateWallet(passphrase string) (string, error) {
 	r := strings.Index(resStr, RIGHT_STR)
 
 	if l+len(LEFT_STR) > r {
-		return "", errors.New("Seed is empty")
+		return "", errors.New("seed is empty")
 	}
 
 	err = os.Remove("./create_wallet_result.exp")

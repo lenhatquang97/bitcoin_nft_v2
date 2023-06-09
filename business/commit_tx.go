@@ -121,15 +121,15 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	return finalRawTx, wif, nil
 }
 
-func FakeCommitTxFee(sv *Server, dataSend []byte, amount int64) (int64, error) {
-	fee, err := EstimateFeeForCommitTx(sv, sv.Config, amount, dataSend)
+func FakeCommitTxFee(sv *Server, dataSend []byte, amount int64, numBlocks int64) (int64, error) {
+	fee, err := EstimateFeeForCommitTx(sv, sv.Config, amount, dataSend, numBlocks)
 	if err != nil {
 		return 0, err
 	}
 	return fee, nil
 }
 
-func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amount int64, dataSend []byte) (int64, error) {
+func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amount int64, dataSend []byte, numBlocks int64) (int64, error) {
 	defaultAddress, err := utils.GetDefaultAddress(sv.client, networkConfig.SenderAddress, networkConfig.ParamsObject)
 	if err != nil {
 		return 0, err
@@ -181,7 +181,7 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 	fakeChangeTxOut := wire.NewTxOut(100, changeAddressScript)
 	redeemTx.AddTxOut(fakeChangeTxOut)
 
-	smartFeeRate, err := sv.client.EstimateFee(1)
+	smartFeeRate, err := sv.client.EstimateFee(numBlocks)
 	if err != nil {
 		return 0, err
 	}
