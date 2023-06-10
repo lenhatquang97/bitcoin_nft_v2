@@ -7,11 +7,13 @@ import (
 	"bitcoin_nft_v2/gobcy"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
+	"bitcoin_nft_v2/witnessbtc"
 	"context"
 	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"os"
 	"os/exec"
@@ -82,12 +84,12 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 	}
 
 	//Step 3: Calculate fee (commit and revealTxFee)
-	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount, isRef)
 	if err != nil {
 		return 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress)
 	if err != nil {
 		return 0, err
 	}
@@ -108,6 +110,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 
 	// Get Nft Data
 	var dataSend []byte
+	//var contentType string
 	var err error
 	if isSendNft {
 		if sv.mode == OFF_CHAIN {
@@ -137,19 +140,16 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 				return "", "", 0, err
 			}
 		} else {
-			var customData string
 			if isRef {
-				customData, err = RawDataEncode(data.(string))
+				dataSend = []byte(data.(string))
 			} else {
-				customData, err = FileSha256(data.(string))
+				dataSend, _, err = witnessbtc.ReadFile(data.(string))
 			}
 
 			if err != nil {
 				// log error
 				return "", "", 0, err
 			}
-
-			dataSend = []byte(customData)
 		}
 	}
 
@@ -160,12 +160,12 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	}
 
 	//Step 3: Calculate fee (commit and revealTxFee)
-	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount, isRef)
 	if err != nil {
 		return "", "", 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, toAddress)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -176,7 +176,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, fmt.Errorf("estimated fee is: %d", estimatedCommitTxFee+estimatedRevealTxFee)
 	}
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, amount, estimatedCommitTxFee)
+	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, amount, estimatedCommitTxFee)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -199,7 +199,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, toAddress, estimatedRevealTxFee)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, estimatedRevealTxFee)
 	if err != nil {
 		fmt.Println(err)
 		return "", "", 0, err
@@ -498,4 +498,36 @@ func (sv *Server) GetDataSendOnChain(data interface{}, isRef bool) ([]byte, erro
 		}
 		return dataSend, nil
 	}
+}
+
+func (sv *Server) GetNftFromUtxo(address string) ([][]byte, error) {
+	utxos, err := sv.client.ListUnspent()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([][]byte, 0)
+	for i := 0; i < len(utxos); i++ {
+		if utxos[i].Address == address {
+			//100_000_000 is because it's testnet
+			hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
+			if err != nil {
+				return nil, err
+			}
+			tx, err := sv.client.GetRawTransaction(hashId)
+			if err != nil {
+				return nil, err
+			}
+
+			witness := tx.MsgTx().TxIn[0].Witness
+			if len(witness) != 3 {
+				continue
+			}
+
+			data := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+			res = append(res, data)
+		}
+	}
+
+	return res, nil
 }

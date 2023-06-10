@@ -55,3 +55,7 @@ type Config struct {
 type GetTxRequest struct {
 	TxID string `json:"txId" form:"txId"`
 }
+
+type GetNftFromUtxo struct {
+	Address string `json:"address" form:"address"`
+}

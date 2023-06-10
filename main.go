@@ -28,6 +28,7 @@ func main() {
 	//}
 	//
 	//sv.DoCommitRevealTransaction(&GlobalNetCfg)
+
 	if len(os.Args) != NUM_OF_PARAM {
 		log.Fatal("Num of args is invalid")
 	}
@@ -40,6 +41,8 @@ func main() {
 		Password:      os.Args[PASSWORD],
 		SenderAddress: os.Args[SENDER_ADDRESS],
 	})
+
+	//witnessbtc.DoFirstTestCaseWithPNG()
 }
 
 func SampleFile() {

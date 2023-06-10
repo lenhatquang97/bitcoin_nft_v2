@@ -273,3 +273,24 @@ func WrapperGetTx(ctx *gin.Context) {
 		Data:    data,
 	})
 }
+
+func WrapperGetNftFromUtxo(ctx *gin.Context) {
+	var req GetNftFromUtxo
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+	}
+
+	res, err := sv.GetNftFromUtxo(req.Address)
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+	}
+
+	ctx.JSON(200, &GetTxResponse{
+		Code:    200,
+		Message: "OK",
+		Data:    res,
+	})
+}

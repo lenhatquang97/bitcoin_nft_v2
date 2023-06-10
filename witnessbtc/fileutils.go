@@ -49,14 +49,20 @@ func ReadFile(filePath string) ([]byte, string, error) {
 	return binFile, contentType, nil
 }
 
-func PrepareInscriptionData(filePath string) ([]byte, error) {
-	rawData, _, err := ReadFile(filePath)
+func PrepareInscriptionData(data string, isRef bool) ([]byte, error) {
+	var rawData []byte
+	var err error
+	if isRef {
+		rawData = []byte(data)
+	} else {
+		rawData, _, err = ReadFile(data)
+	}
 	if err != nil {
 		return nil, err
 	}
 
 	privKey, _ := btcec.NewPrivateKey()
-	embeddedData, _ := utils.CreateInscriptionScript(privKey.PubKey(), rawData)
+	embeddedData, _ := utils.CreateInscriptionScriptV2(privKey.PubKey(), rawData, isRef)
 	return embeddedData, nil
 }
 

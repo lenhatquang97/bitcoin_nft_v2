@@ -8,12 +8,13 @@ import (
 )
 
 func DoFirstTestCaseWithPNG() {
-	embeddedData, err := PrepareInscriptionData("./README.md")
+	embeddedData, err := PrepareInscriptionData("./README.md", false)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	body := DeserializeWitnessDataIntoInscription(embeddedData)
+	fmt.Println(string(body))
 	WriteData(body, "./GG.md")
 }
 func DoSecondTestCaseWithText() {
