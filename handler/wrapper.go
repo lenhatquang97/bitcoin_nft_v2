@@ -288,7 +288,13 @@ func WrapperGetNftFromUtxo(ctx *gin.Context) {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 	}
 
-	ctx.JSON(200, &GetTxResponse{
+	var resStr []string
+	for _, item := range res {
+		resStr = append(resStr, string(item))
+	}
+	fmt.Println(resStr[0])
+
+	ctx.JSON(200, &GetNftFromUtxoRes{
 		Code:    200,
 		Message: "OK",
 		Data:    res,

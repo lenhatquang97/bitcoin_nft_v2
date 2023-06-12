@@ -13,11 +13,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/rpcclient"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/rpcclient"
 )
 
 const (
@@ -89,11 +90,14 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 		return 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress, amount)
 	if err != nil {
 		return 0, err
 	}
-	return estimatedCommitTxFee + estimatedRevealTxFee, nil
+
+	nftValue := 10000
+
+	return estimatedCommitTxFee + estimatedRevealTxFee + int64(nftValue), nil
 }
 
 // Send
@@ -108,6 +112,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	//}
 	//nameSpace := DefaultNameSpace
 
+	fmt.Println("Oh start")
 	// Get Nft Data
 	var dataSend []byte
 	//var contentType string
@@ -141,9 +146,11 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 			}
 		} else {
 			if isRef {
+				fmt.Println("Oh no")
 				dataSend = []byte(data.(string))
 			} else {
-				dataSend, _, err = witnessbtc.ReadFile(data.(string))
+				stringArr := data.([]string)
+				dataSend, _, err = witnessbtc.ReadFile(stringArr[0])
 			}
 
 			if err != nil {
@@ -165,15 +172,25 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress, amount)
 	if err != nil {
 		return "", "", 0, err
 	}
 
-	if amount <= estimatedCommitTxFee+estimatedRevealTxFee {
-		fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
-		fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
-		return "", "", 0, fmt.Errorf("estimated fee is: %d", estimatedCommitTxFee+estimatedRevealTxFee)
+	//Special case: if inscribe raw nft data --> nftValue = 10000
+	nftValue := 0
+	if !isRef && sv.mode == ON_CHAIN {
+		nftValue = 10000
+		estimatedRevealTxFee += int64(nftValue)
+	}
+
+	fmt.Println("Input dataSend:", dataSend)
+	fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
+	fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
+	fmt.Println("Estimated fee is: ", estimatedCommitTxFee+estimatedRevealTxFee)
+
+	if amount <= int64(nftValue) {
+		return "", "", 0, fmt.Errorf("error: amount must be greater than %d", nftValue)
 	}
 
 	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, amount, estimatedCommitTxFee)
@@ -199,7 +216,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, estimatedRevealTxFee)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, estimatedRevealTxFee, int64(nftValue))
 	if err != nil {
 		fmt.Println(err)
 		return "", "", 0, err
@@ -320,7 +337,7 @@ func (sv *Server) CreateWallet(passphrase string) (string, error) {
 	r := strings.Index(resStr, RIGHT_STR)
 
 	if l+len(LEFT_STR) > r {
-		return "", errors.New("Seed is empty")
+		return "", errors.New("seed is empty")
 	}
 
 	err = os.Remove("./create_wallet_result.exp")
@@ -525,7 +542,9 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, error) {
 			}
 
 			data := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
-			res = append(res, data)
+			if data != nil {
+				res = append(res, data)
+			}
 		}
 	}
 

@@ -75,7 +75,7 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 			finalBodyPos := utils.FindStartOfByteArrayFromEnd([]byte(flagEnd), embeddedData, len(embeddedData)-1)
 			//body = append(body, embeddedData[startBodyPos:len(embeddedData)-1]...)
 			fmt.Println("flag end", finalBodyPos)
-			body = append(body, embeddedData[startBodyPos:finalBodyPos]...)
+			body = append(body, embeddedData[startBodyPos:finalBodyPos-1]...)
 		}
 	}
 	return body

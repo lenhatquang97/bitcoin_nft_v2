@@ -4,6 +4,7 @@ import (
 	"bitcoin_nft_v2/nft_tree"
 	"crypto/sha256"
 	"encoding/binary"
+
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"

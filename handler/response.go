@@ -62,7 +62,7 @@ type GetTxResponse struct {
 }
 
 type GetNftFromUtxoRes struct {
-	Code    int32       `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Code    int32    `json:"code"`
+	Message string   `json:"message"`
+	Data    [][]byte `json:"data"`
 }
