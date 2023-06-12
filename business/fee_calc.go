@@ -5,6 +5,8 @@ import (
 	"bitcoin_nft_v2/utils"
 	"fmt"
 
+	"github.com/btcsuite/btcd/mempool"
+
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -59,7 +61,7 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 		return 0, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
+	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount), "")
 	for _, utxo := range sendUtxos {
 		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
 		if err != nil {
@@ -81,7 +83,8 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 	fakeChangeTxOut := wire.NewTxOut(100, changeAddressScript)
 	redeemTx.AddTxOut(fakeChangeTxOut)
 
-	txSize := int64(redeemTx.SerializeSize())
+	//txSize := int64(redeemTx.SerializeSize())
+	txSize := mempool.GetTxVirtualSize(btcutil.NewTx(redeemTx))
 	fee := CalcMinRequiredTxRelayFee(txSize, 1000)
 	return fee, nil
 }
@@ -92,7 +95,8 @@ func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRe
 		return 0, err
 	}
 
-	txSize := int64(tx.SerializeSize())
+	//txSize := int64(tx.SerializeSize())
+	txSize := mempool.GetTxVirtualSize(btcutil.NewTx(tx))
 	fee := CalcMinRequiredTxRelayFee(txSize, 1000)
 
 	if err != nil {
