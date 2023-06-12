@@ -67,27 +67,6 @@ func FakeRevealTxFee(sv *Server, dataSend []byte, isRef bool, toAddress string, 
 	return estimatedFee, nil
 }
 
-func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string, amount int64) (int64, error) {
-	tx, _, _, _, err := CreateRevealTxObj(client, embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress, amount)
-	if err != nil {
-		return 0, err
-	}
-
-	smartFeeRate, err := client.EstimateFee(1)
-	if err != nil {
-		return 0, err
-	}
-
-	smartFeeRate = smartFeeRate * 100_000
-	fmt.Println("smartFeeRate: ", smartFeeRate)
-	fmt.Println("tx.SerializeSize(): ", tx.SerializeSize())
-	fee := int64(smartFeeRate * float64(tx.SerializeSize()) * 2)
-	if err != nil {
-		return 0, err
-	}
-	return fee, nil
-}
-
 /*
 For support in reveal tx
 */

@@ -301,6 +301,14 @@ func WrapperGetNftFromUtxo(ctx *gin.Context) {
 		outputRes = append(outputRes, tmpNft)
 	}
 
+	//Hardcored NFT
+	hardCodedNft := NftFromUtxo{
+		HexData:  "31323334350a31323334350a6e6f0a6e6f0a4f4b0a",
+		MimeType: "text/plain; charset=utf-8",
+		TxId:     "f2b49031b2aecc5c87cd71a3dce67bd89201493610f9e329f920968f86402358",
+	}
+	outputRes = append(outputRes, hardCodedNft)
+
 	ctx.JSON(200, &GetNftFromUtxoRes{
 		Code:    200,
 		Message: "OK",
