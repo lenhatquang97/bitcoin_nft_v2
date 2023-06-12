@@ -234,7 +234,7 @@ func WrapperCreateWallet(ctx *gin.Context) {
 
 	seed, err := sv.CreateWallet(req.Passphrase)
 	if err != nil {
-		ctx.JSON(400, err)
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 		return
 	}
 
