@@ -13,13 +13,13 @@ func DoFirstTestCaseWithPNG() {
 		fmt.Println(err)
 		return
 	}
-	body := DeserializeWitnessDataIntoInscription(embeddedData)
+	body, _ := DeserializeWitnessDataIntoInscription(embeddedData)
 	fmt.Println(string(body))
 	WriteData(body, "./GG.md")
 }
 func DoSecondTestCaseWithText() {
 	privKey, _ := btcec.NewPrivateKey()
 	embeddedData, _ := utils.CreateInscriptionScript(privKey.PubKey(), []byte("Hello World. It's me Mario!"))
-	body := DeserializeWitnessDataIntoInscription(embeddedData)
+	body, _ := DeserializeWitnessDataIntoInscription(embeddedData)
 	fmt.Println(string(body))
 }

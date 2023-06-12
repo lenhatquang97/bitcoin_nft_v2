@@ -438,9 +438,6 @@ func (sv *Server) GetTx(txId string) (interface{}, error) {
 	//using a struct literal
 	bc := gobcy.API{Token: "0e3279a9ec4e4859ba55945c6a29a6ec", Coin: "btc", Chain: "test3"}
 
-	//query away
-	fmt.Println(bc.GetChain())
-
 	res, err := bc.GetTX(txId, make(map[string]string))
 	if err != nil {
 		fmt.Println(err)
@@ -448,11 +445,6 @@ func (sv *Server) GetTx(txId string) (interface{}, error) {
 	}
 
 	return res, nil
-
-	//fmt.Println("Success create add key chain")
-	//fmt.Println(res)
-	//bc.CreateWallet()
-	//fmt.Println(bc.GetBlock(300000, "", nil))
 }
 func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, error) {
 	var nftData []*NftData
@@ -524,7 +516,24 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, error) {
 				continue
 			}
 
-			data := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+			data, isRef := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+			if isRef {
+				hashId, err = chainhash.NewHashFromStr(string(data))
+				if err != nil {
+					return nil, err
+				}
+				tx, err = sv.client.GetRawTransaction(hashId)
+				if err != nil {
+					return nil, err
+				}
+
+				witness = tx.MsgTx().TxIn[0].Witness
+				if len(witness) != 3 {
+					continue
+				}
+
+				data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+			}
 			res = append(res, data)
 		}
 	}

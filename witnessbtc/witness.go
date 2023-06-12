@@ -3,7 +3,6 @@ package witnessbtc
 import (
 	"bitcoin_nft_v2/utils"
 	"fmt"
-
 	"github.com/btcsuite/btcd/txscript"
 )
 
@@ -32,7 +31,7 @@ func GetPaddingInAddData(data []byte) int {
 	}
 }
 
-func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
+func DeserializeWitnessDataIntoInscription(embeddedData []byte) ([]byte, bool) {
 	fixedBytes := []byte{txscript.OP_CHECKSIG, txscript.OP_0, txscript.OP_IF}
 	validPosition := -1
 	for i := range embeddedData {
@@ -45,6 +44,7 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 	flagEnd := "m25end"
 	flagData := "m25start-data"
 	flagRef := "m25start-ref"
+	isRef := false
 	fmt.Println(validPosition)
 	if validPosition != -1 {
 		startBodyPos1 := utils.FindStartOfByteArray([]byte(flagData), embeddedData) //+ len([]byte("m25start-data"))
@@ -53,13 +53,14 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 		if startBodyPos1 == -1 {
 			startBodyPos = startBodyPos2 + len([]byte(flagRef))
 			flagEnd += "-ref"
+			isRef = true
 		} else {
 			startBodyPos += len([]byte(flagData))
 			flagEnd += "-data"
 		}
 		endBodyPos := startBodyPos + 500
 		if startBodyPos == -1 {
-			return nil
+			return nil, false
 		}
 
 		if endBodyPos < len(embeddedData) {
@@ -78,5 +79,6 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) []byte {
 			body = append(body, embeddedData[startBodyPos:finalBodyPos]...)
 		}
 	}
-	return body
+
+	return body, isRef
 }
