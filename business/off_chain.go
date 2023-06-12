@@ -117,6 +117,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	var dataSend []byte
 	//var contentType string
 	var err error
+	txIdRef := ""
 	if isSendNft {
 		if sv.mode == OFF_CHAIN {
 			var nftData []*NftData
@@ -146,8 +147,8 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 			}
 		} else {
 			if isRef {
-				fmt.Println("Oh no")
-				dataSend = []byte(data.(string))
+				txIdRef = data.(string)
+				dataSend = []byte(txIdRef)
 			} else {
 				stringArr := data.([]string)
 				dataSend, _, err = witnessbtc.ReadFile(stringArr[0])
@@ -193,7 +194,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, fmt.Errorf("error: amount must be greater than %d", nftValue)
 	}
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, amount, estimatedCommitTxFee)
+	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, txIdRef, amount, estimatedCommitTxFee)
 	if err != nil {
 		return "", "", 0, err
 	}

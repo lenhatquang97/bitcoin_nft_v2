@@ -13,8 +13,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, amount int64, fee int64) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, sv.Config, fee)
+func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef string, amount int64, fee int64) (*chainhash.Hash, *btcutil.WIF, error) {
+	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, sv.Config, fee)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -26,7 +26,7 @@ func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, amount int64,
 	return commitTxHash, wif, nil
 }
 
-func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, isRef bool, networkConfig *config.NetworkConfig, fee int64) (*wire.MsgTx, *btcutil.WIF, error) {
+func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, isRef bool, txIdRef string, networkConfig *config.NetworkConfig, fee int64) (*wire.MsgTx, *btcutil.WIF, error) {
 	//Step 1: Get private key
 	defaultAddress, err := utils.GetDefaultAddress(client, networkConfig.SenderAddress, networkConfig.ParamsObject)
 	if err != nil {
@@ -44,7 +44,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
+	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount), txIdRef)
 	if len(sendUtxos) == 0 {
 		return nil, nil, fmt.Errorf("no utxos")
 	}
@@ -159,7 +159,7 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 		return 0, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount))
+	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount), "")
 	for _, utxo := range sendUtxos {
 		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
 		if err != nil {

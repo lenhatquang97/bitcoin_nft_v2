@@ -14,7 +14,7 @@ type MyUtxo struct {
 	Amount float64
 }
 
-func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float64) []*MyUtxo {
+func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float64, specialTxId string) []*MyUtxo {
 	var myUtxos []*MyUtxo
 	for i := 0; i < len(utxos); i++ {
 		if utxos[i].Address == address {
@@ -26,7 +26,24 @@ func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float
 		}
 	}
 	var res []*MyUtxo
+	// fistly choose utxo with tx id
 	for _, utxo := range myUtxos {
+		if utxo.TxID == specialTxId {
+			res = append(res, utxo)
+			amount -= utxo.Amount
+			break
+		}
+	}
+
+	if amount <= 0 {
+		return res
+	}
+
+	for _, utxo := range myUtxos {
+		if utxo.TxID == specialTxId {
+			continue
+		}
+
 		res = append(res, utxo)
 		amount -= utxo.Amount
 		if amount <= 0 {
