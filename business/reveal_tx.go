@@ -18,8 +18,8 @@ import (
 Reveal transaction
 */
 
-func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, isRef bool, toAddress string, fee int64) (*chainhash.Hash, error) {
-	revealTx, err := RevealTx(client, data, isRef, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig, toAddress, fee)
+func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, isRef bool, toAddress string, fee int64, amount int64) (*chainhash.Hash, error) {
+	revealTx, err := RevealTx(client, data, isRef, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig, toAddress, fee, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxI
 	return revealTxHash, nil
 }
 
-func RevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string, fee int64) (*wire.MsgTx, error) {
-	tx, outputScript, sigHashes, inputFetcher, err := CreateRevealTxObj(client, embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress)
+func RevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string, fee int64, amount int64) (*wire.MsgTx, error) {
+	tx, outputScript, sigHashes, inputFetcher, err := CreateRevealTxObj(client, embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func RevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitT
 	return tx, nil
 }
 
-func FakeRevealTxFee(sv *Server, dataSend []byte, isRef bool, toAddress string) (int64, error) {
+func FakeRevealTxFee(sv *Server, dataSend []byte, isRef bool, toAddress string, amount int64) (int64, error) {
 	fakeCommitTxHash, err := chainhash.NewHashFromStr("932012f4b18bad5f1e8ece085bac68dae6b8213b58cdf6a38f52752df81d0663")
 	if err != nil {
 		fmt.Println(err)
@@ -59,7 +59,7 @@ func FakeRevealTxFee(sv *Server, dataSend []byte, isRef bool, toAddress string) 
 		fmt.Println(err)
 		return 0, err
 	}
-	estimatedFee, err := EstimatedFeeForRevealTx(sv.client, dataSend, isRef, *fakeCommitTxHash, *fakeCommitOutput, 0, randPriv, sv.Config.ParamsObject, toAddress)
+	estimatedFee, err := EstimatedFeeForRevealTx(sv.client, dataSend, isRef, *fakeCommitTxHash, *fakeCommitOutput, 0, randPriv, sv.Config.ParamsObject, toAddress, amount)
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
@@ -67,8 +67,8 @@ func FakeRevealTxFee(sv *Server, dataSend []byte, isRef bool, toAddress string) 
 	return estimatedFee, nil
 }
 
-func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string) (int64, error) {
-	tx, _, _, _, err := CreateRevealTxObj(client, embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress)
+func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string, amount int64) (int64, error) {
+	tx, _, _, _, err := CreateRevealTxObj(client, embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress, amount)
 	if err != nil {
 		return 0, err
 	}
@@ -92,7 +92,7 @@ func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRe
 For support in reveal tx
 */
 
-func CreateRevealTxObj(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string) (*wire.MsgTx, []byte, *txscript.TxSigHashes, txscript.PrevOutputFetcher, error) {
+func CreateRevealTxObj(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string, amount int64) (*wire.MsgTx, []byte, *txscript.TxSigHashes, txscript.PrevOutputFetcher, error) {
 	pubKey := randPriv.PubKey()
 	pkScript, err := utils.CreateInscriptionScriptV2(pubKey, embeddedData, isRef)
 
@@ -134,9 +134,9 @@ func CreateRevealTxObj(client *rpcclient.Client, embeddedData []byte, isRef bool
 		return nil, nil, nil, nil, fmt.Errorf("error creating op return script: %v", err)
 	}
 
-	//TODO: 100 is right?
+	//TODO: amount is right?
 	txOut := &wire.TxOut{
-		Value: 100, PkScript: customAddrScript,
+		Value: amount, PkScript: customAddrScript,
 	}
 	tx.AddTxOut(txOut)
 

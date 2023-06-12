@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"encoding/hex"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -282,15 +284,26 @@ func WrapperGetNftFromUtxo(ctx *gin.Context) {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 	}
 
-	res, err := sv.GetNftFromUtxo(req.Address)
+	res, txIds, err := sv.GetNftFromUtxo(req.Address)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 	}
 
-	ctx.JSON(200, &GetTxResponse{
+	var outputRes []NftFromUtxo
+	for i, item := range res {
+		tmpMimeType := http.DetectContentType(item)
+		tmpNft := NftFromUtxo{
+			HexData:  hex.EncodeToString(item),
+			MimeType: tmpMimeType,
+			TxId:     txIds[i],
+		}
+		outputRes = append(outputRes, tmpNft)
+	}
+
+	ctx.JSON(200, &GetNftFromUtxoRes{
 		Code:    200,
 		Message: "OK",
-		Data:    res,
+		Data:    outputRes,
 	})
 }
