@@ -517,23 +517,24 @@ func (sv *Server) GetDataSendOnChain(data interface{}, isRef bool) ([]byte, erro
 	}
 }
 
-func (sv *Server) GetNftFromUtxo(address string) ([][]byte, error) {
+func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, error) {
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	res := make([][]byte, 0)
+	txIds := make([]string, 0)
 	for i := 0; i < len(utxos); i++ {
 		if utxos[i].Address == address {
 			//100_000_000 is because it's testnet
 			hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			tx, err := sv.client.GetRawTransaction(hashId)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			witness := tx.MsgTx().TxIn[0].Witness
@@ -544,9 +545,10 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, error) {
 			data := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
 			if data != nil {
 				res = append(res, data)
+				txIds = append(txIds, utxos[i].TxID)
 			}
 		}
 	}
 
-	return res, nil
+	return res, txIds, nil
 }

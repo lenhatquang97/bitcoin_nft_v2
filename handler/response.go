@@ -62,7 +62,13 @@ type GetTxResponse struct {
 }
 
 type GetNftFromUtxoRes struct {
-	Code    int32    `json:"code"`
-	Message string   `json:"message"`
-	Data    [][]byte `json:"data"`
+	Code    int32         `json:"code"`
+	Message string        `json:"message"`
+	Data    []NftFromUtxo `json:"data"`
+}
+
+type NftFromUtxo struct {
+	HexData  string `json:"hexData"`
+	MimeType string `json:"mimeType"`
+	TxId     string `json:"txId"`
 }
