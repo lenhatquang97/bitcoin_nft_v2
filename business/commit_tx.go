@@ -44,7 +44,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount), txIdRef)
+	sendUtxos := utils.GetManyUtxo(client, utxos, defaultAddress.EncodeAddress(), float64(amount), txIdRef)
 	if len(sendUtxos) == 0 {
 		return nil, nil, fmt.Errorf("no utxos")
 	}

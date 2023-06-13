@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -14,7 +17,7 @@ type MyUtxo struct {
 	Amount float64
 }
 
-func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float64, specialTxId string) []*MyUtxo {
+func GetManyUtxo(client *rpcclient.Client, utxos []btcjson.ListUnspentResult, address string, amount float64, specialTxId string) []*MyUtxo {
 	var myUtxos []*MyUtxo
 	for i := 0; i < len(utxos); i++ {
 		if utxos[i].Address == address {
@@ -40,7 +43,11 @@ func GetManyUtxo(utxos []btcjson.ListUnspentResult, address string, amount float
 	}
 
 	for _, utxo := range myUtxos {
-		if utxo.TxID == specialTxId {
+		isNft, _ := CheckTransactionHasNft(client, utxo.TxID)
+		if isNft {
+			fmt.Println("Ok man :)")
+		}
+		if utxo.TxID == specialTxId && !isNft {
 			continue
 		}
 
@@ -95,4 +102,34 @@ func GetDefaultAddress(client *rpcclient.Client, senderAddress string, config *c
 		return nil, err
 	}
 	return customAddress, nil
+}
+
+func CheckTransactionHasNft(client *rpcclient.Client, txId string) (bool, error) {
+	hashId, err := chainhash.NewHashFromStr(txId)
+	if err != nil {
+		return false, err
+	}
+
+	tx, err := client.GetRawTransaction(hashId)
+	if err != nil {
+		return false, err
+	}
+	witness := tx.MsgTx().TxIn[0].Witness
+	if len(witness) != 3 {
+		return false, nil
+	}
+
+	maxLen := 100
+	script := witness[1]
+
+	//check whether script contains []byte("m25start"), if yes, it means this transaction has nft and return true
+	if len(script) < maxLen {
+		maxLen = len(script)
+	}
+	for i := 0; i <= maxLen-8; i++ {
+		if string(script[i:i+8]) == "m25start" {
+			return true, nil
+		}
+	}
+	return false, nil
 }

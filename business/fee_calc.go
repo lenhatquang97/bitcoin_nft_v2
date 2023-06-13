@@ -47,7 +47,7 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 		return 0, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount), "")
+	sendUtxos := utils.GetManyUtxo(sv.client, utxos, defaultAddress.EncodeAddress(), float64(amount), "")
 	for _, utxo := range sendUtxos {
 		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
 		if err != nil {
