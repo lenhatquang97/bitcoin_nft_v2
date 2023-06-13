@@ -17,20 +17,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func CalcMinRequiredTxRelayFee(serializedSize int64, minRelayTxFee btcutil.Amount) int64 {
-	minFee := (serializedSize * int64(minRelayTxFee)) / 1000
-
-	if minFee == 0 && minRelayTxFee > 0 {
-		minFee = int64(minRelayTxFee)
-	}
-
-	if minFee < 0 || minFee > btcutil.MaxSatoshi {
-		minFee = btcutil.MaxSatoshi
-	}
-
-	return minFee
-}
-
 func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amount int64, dataSend []byte, isRef bool) (int64, error) {
 	defaultAddress, err := utils.GetDefaultAddress(sv.client, networkConfig.SenderAddress, networkConfig.ParamsObject)
 	if err != nil {
@@ -83,9 +69,13 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 	fakeChangeTxOut := wire.NewTxOut(100, changeAddressScript)
 	redeemTx.AddTxOut(fakeChangeTxOut)
 
-	//txSize := int64(redeemTx.SerializeSize())
+	//txSize := int64(tx.SerializeSize())
+	feeRate, err := sv.client.EstimateFee(2)
+	if err != nil {
+		return 0, err
+	}
 	txSize := mempool.GetTxVirtualSize(btcutil.NewTx(redeemTx))
-	fee := CalcMinRequiredTxRelayFee(txSize, 1000)
+	fee := txSize * int64(feeRate*100_000)
 	return fee, nil
 }
 
@@ -96,8 +86,14 @@ func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRe
 	}
 
 	//txSize := int64(tx.SerializeSize())
+	feeRate, err := client.EstimateFee(1)
+	if err != nil {
+		return 0, err
+	}
 	txSize := mempool.GetTxVirtualSize(btcutil.NewTx(tx))
-	fee := CalcMinRequiredTxRelayFee(txSize, 1000)
+	fee := txSize * int64(feeRate*100_000)
+
+	fmt.Println("Fee rate for reveal tx:", int64(feeRate*100_000))
 
 	if err != nil {
 		return 0, err

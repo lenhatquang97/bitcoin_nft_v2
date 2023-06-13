@@ -169,7 +169,7 @@ func WrapperCheckBalance(ctx *gin.Context) {
 
 func WrapperViewNftData(ctx *gin.Context) {
 	var req ViewNftDataRequest
-	err := ctx.ShouldBindJSON(&req)
+	err := ctx.ShouldBindQuery(&req)
 	if err != nil {
 		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))
 		return

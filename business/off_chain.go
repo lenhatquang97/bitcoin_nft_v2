@@ -95,9 +95,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 		return 0, err
 	}
 
-	nftValue := 10000
-
-	return estimatedCommitTxFee + estimatedRevealTxFee + int64(nftValue), nil
+	return estimatedCommitTxFee + estimatedRevealTxFee, nil
 }
 
 // Send
@@ -178,23 +176,12 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, err
 	}
 
-	//Special case: if inscribe raw nft data --> nftValue = 10000
-	nftValue := 0
-	if !isRef && sv.mode == ON_CHAIN {
-		nftValue = 10000
-		estimatedRevealTxFee += int64(nftValue)
-	}
-
 	fmt.Println("Input dataSend:", dataSend)
 	fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
 	fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
 	fmt.Println("Estimated fee is: ", estimatedCommitTxFee+estimatedRevealTxFee)
 
-	if amount <= int64(nftValue) {
-		return "", "", 0, fmt.Errorf("error: amount must be greater than %d", nftValue)
-	}
-
-	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, txIdRef, amount, estimatedCommitTxFee)
+	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, txIdRef, estimatedRevealTxFee+amount, estimatedCommitTxFee)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -217,7 +204,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, estimatedRevealTxFee, int64(nftValue))
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, estimatedRevealTxFee, amount)
 	if err != nil {
 		fmt.Println(err)
 		return "", "", 0, err

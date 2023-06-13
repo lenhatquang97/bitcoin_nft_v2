@@ -60,7 +60,7 @@ func NewTestPgFixture() *TestPgFixture {
 		config.AutoRemove = true
 		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	})
-
+	fmt.Println(err)
 	hostAndPort := resource.GetHostPort("5432/tcp")
 	parts := strings.Split(hostAndPort, ":")
 	host := parts[0]
