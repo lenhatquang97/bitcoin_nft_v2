@@ -176,7 +176,6 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, err
 	}
 
-	fmt.Println("Input dataSend:", dataSend)
 	fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
 	fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
 	fmt.Println("Estimated fee is: ", estimatedCommitTxFee+estimatedRevealTxFee)
