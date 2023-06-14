@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"fmt"
-
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -44,10 +42,7 @@ func GetManyUtxo(client *rpcclient.Client, utxos []btcjson.ListUnspentResult, ad
 
 	for _, utxo := range myUtxos {
 		isNft, _ := CheckTransactionHasNft(client, utxo.TxID)
-		if isNft {
-			fmt.Println("Ok man :)")
-		}
-		if utxo.TxID == specialTxId && !isNft {
+		if utxo.TxID == specialTxId || isNft {
 			continue
 		}
 
