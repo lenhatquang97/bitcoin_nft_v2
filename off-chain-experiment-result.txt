@@ -1,0 +1,69 @@
+test-inscription: {
+      "revealTxId": "f92b6de4156c6202aeedc02beece585896207a7a9c9493168df9f3800bf5ce21",
+      "commitTxId": "b81639923d0c132259afdb4c297f55a136ea47c4edaa82b33e3aae853c2d1f1b",
+      "feeRate": 4,
+      "fee": 2076
+}
+
+Doraemon: {
+      "revealTxId": "b29fd7dce960f44f5b66d99aa450ca78b20a9266684cc8eca806d21ee312a00f",
+      "commitTxId": "f75c8a76d0e0ec8b37059da869beb945c5e47811f89db323bc397977220a40f0",
+      "feeRate": 9,
+      "fee": 5778
+}
+
+4k: {
+    "revealTxId": "ddba70bfedc3582727108f54daeaa3fe9ac01c0872c4f203d04f860b499bd069",
+    "commitTxId": "912afb8114f8179941585cde49c3e006b1502de5be8541f243ea961e2faff675",
+    "feeRate": 9,
+    "fee": 4671
+}
+
+Kudo: {
+      "revealTxId": "44118abd968e53c8c21337b938d53538bc5a16847dd358889b659bdedb14fd71",
+      "commitTxId": "fb2dcc75fe71a9d037a8b88ea4c53859cc6f337494f9fcd46c5761e64e643c2f",
+      "feeRate": 9,
+      "fee": 4671
+}
+
+video: {
+       "revealTxId": "b8ccf87cdd337aa18f5feab96a6c01cd610838cca4c2869e3c40c0019bebf8ab",
+       "commitTxId": "1b24fe14031994fbc207d2cc07bcf46103eb2fc9f0d7964e933c879d6ac8f416",
+       "feeRate": 9,
+       "fee": 4671
+}
+
+100kb: {
+       "revealTxId": "588ff76966b069fdec5a9ee5f55e355446c0506606bb30c46974e7b652c26a88",
+       "commitTxId": "7ba1012a8b3e119d1a8758f1a737d13abc18243988f9c76d8e1baf331a2ef7b3",
+       "feeRate": 9,
+       "fee": 4671
+}
+
+150kb: {
+       "revealTxId": "2750df852bb71231bfcb2cf8bdf9b97403511720ad9a2240342c76c6ab5d340b",
+       "commitTxId": "3aa891da3de30fcea15d429ebe959b6fc6fe4da10822201b5f971ac60df90a29",
+       "feeRate": 5,
+       "fee": 2595
+}
+
+final: {
+       "revealTxId": "84ff0d5e89049470094bdeeffd5008a93e95e8d799cbed052f28a1bc0a93f14c",
+       "commitTxId": "db755d349112b443aff80cac54820e905c3358826dbd5676305a473681961fc9",
+       "feeRate": 8,
+       "fee": 4152
+}
+
+50kb : {
+       "revealTxId": "244c30a0a26f0a6b2713d825d019b4649ad0f1761b351922beb104ba06a948ba",
+       "commitTxId": "a2f328a1c6d626dbc2ecc2073535362d260d34e388b6c0ae1bf0314bfca090c6",
+       "feeRate": 7,
+       "fee": 3633
+}
+
+1841: {
+      "revealTxId": "a12adaf1e772711d89f88e64cec2c0813723c8fa245e39663514a393e17cfdc7",
+      "commitTxId": "36e106ec400eec04803f91730e3822038c83e14b81dbb6c347185f0b6a23dec7",
+      "feeRate": 5,
+      "fee": 2595
+}

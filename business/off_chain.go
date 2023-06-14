@@ -67,7 +67,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
-		dataSend, err = sv.GetDataSendOnChain(data, isRef)
+		dataSend, err = sv.GetDataSendOffChain(data, isRef)
 		if err != nil {
 			fmt.Println("Compute root hash for receiver error")
 			fmt.Println(err)
