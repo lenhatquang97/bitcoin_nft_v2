@@ -67,6 +67,7 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	router.GET("/balance", WrapperCheckBalance)
 	router.GET("/tx", WrapperGetTx)
 	router.GET("/on-chain-nft", WrapperGetNftFromUtxo)
+	router.GET("/tx/size", WrapperGetTxSize)
 }
 
 func Run(config *Config) {

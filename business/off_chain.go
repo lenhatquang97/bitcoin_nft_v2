@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/btcsuite/btcd/mempool"
 	"os"
 	"os/exec"
 	"strings"
@@ -65,7 +66,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
-		dataSend, err = sv.GetDataSendOffChain(data, isRef)
+		dataSend, err = sv.GetDataSendOnChain(data, isRef)
 		if err != nil {
 			fmt.Println("Compute root hash for receiver error")
 			fmt.Println(err)
@@ -550,4 +551,20 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, error) {
 	}
 
 	return res, txIds, nil
+}
+
+func (sv *Server) GetTxSize(txId string) (int64, int, error) {
+	hashId, err := chainhash.NewHashFromStr(txId)
+	if err != nil {
+		return 0, 0, err
+	}
+	tx, err := sv.client.GetRawTransaction(hashId)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	virtualSize := mempool.GetTxVirtualSize(tx)
+	serializeSize := tx.MsgTx().SerializeSize()
+
+	return virtualSize, serializeSize, nil
 }

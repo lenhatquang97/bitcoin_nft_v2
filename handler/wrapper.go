@@ -3,9 +3,8 @@ package handler
 import (
 	"encoding/hex"
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type ErrorResponse struct {
@@ -313,5 +312,38 @@ func WrapperGetNftFromUtxo(ctx *gin.Context) {
 		Code:    200,
 		Message: "OK",
 		Data:    outputRes,
+	})
+}
+
+func WrapperGetTxSize(ctx *gin.Context) {
+	type getTxSizeReq struct {
+		TxID string `json:"txId" form:"txId"`
+	}
+
+	type getTxSizeRes struct {
+		VirtualSize   int64 `json:"virtualSize"`
+		SerializeSize int   `json:"serializeSize"`
+	}
+	var req getTxSizeReq
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+		return
+	}
+
+	if req.TxID == "" {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, "TX_ID_REQUIRED"))
+		return
+	}
+
+	virtualSize, serializeSize, err := sv.GetTxSize(req.TxID)
+	if err != nil {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+		return
+	}
+
+	ctx.JSON(200, &getTxSizeRes{
+		VirtualSize:   virtualSize,
+		SerializeSize: serializeSize,
 	})
 }
