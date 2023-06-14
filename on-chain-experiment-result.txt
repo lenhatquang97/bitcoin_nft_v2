@@ -1,0 +1,69 @@
+50kb: {
+        "revealTxId": "369186523638f6bceb561b6956594ec155a0b82cff653f96ef5ab538e7699823",
+        "commitTxId": "aec36d27afe59321b2cb77d630f5a5a715a88f05731a0ceb5a37758a3bf76a9f",
+        "fileSize": 49500,
+        "fee": 13082
+}
+
+kudo: {
+      "revealTxId": "6d374388bbbb8fe758cf5c5e425d10840c3d95a2f89d119517782d7a6d3d2d65",
+      "commitTxId": "86b8c3f9a396ae9dac54ace930acd86511a5c9343eb0739b830f14cd7b0e9ae2",
+      "fileSize": 5695,
+      "fee": 20660
+}
+
+test-inscription.txt: {
+        "revealTxId": "cf84848cf56f68ccdc3e0947673492dbe7386f047b9cf1f0f39ae173e6748ca8",
+        "commitTxId": "158151decfc246a11a41c785069d7363eb2ae23316737b73682c0fc9a3edf636",
+        "fileSize": 9,
+        "fee": 636
+}
+
+Doraemon: {
+      "revealTxId": "d3c786a0415dd0532ae9ab6d652c62da5301771eb0fe5d1da3350145f255909c",
+      "commitTxId": "5383171a77691aca70c62daf238649bd3e5a8869afdbc400212416779c559537",
+      "fileSize": 15391,
+      "fee": 4505
+}
+
+video: {
+       "revealTxId": "d5f3c858fe24f5acf1e92256108f8e67fc9b7afbb1dade2bdd694a730d3c7b9b",
+       "commitTxId": "710d20487f4a865cf23bd87e998a3783b78708d4ba41bb118ed3624857d2416a",
+       "fileSize": 243345,
+       "fee": 61836
+}
+
+4k: {
+        "revealTxId": "b47653ba748dfac05ebb647ad8cbefe8da0ce7ae17e9cf22055439d0533462f5",
+        "commitTxId": "d26c0f008368a539a720bd69138bb670306538e95f117a987a088f30d3521b86",
+        "fileSize": 213442,
+        "fee": 54315
+}
+
+100kb: {
+       "revealTxId": "696d857a6a5690292289959ee9e866e0fe76d34524d5cdf7962dab8dbaa5fe6b",
+       "commitTxId": "5cd89c00693a7d6b9f38cbfb1c5e4488d0bed9e903fad95f2d3ebdb32c8fa398",
+       "fileSize": 100700,
+       "fee": 25952
+}
+
+150kb: {
+       "revealTxId": "9c404d2b76af3494dfae0a909f1c0446f890c110f9313d15a1c1d845885d8c71",
+       "commitTxId": "7a58a7ef1e70f0ced70ca9f1dc563310d9119e398615191a704a9720c33388c1",
+       "fileSize": 153380,
+       "fee": 39087
+}
+
+1841: {
+      "revealTxId": "4a4bb6841ed1a9204bdbad87d837cf5a2b9d2d928d1ef7a961020b27e9dca767",
+      "commitTxId": "74ceffc6b543b4d5cfae7866d353138a6e6c17b20dd5a37edaa253871e19699a",
+      "fileSize": 339963,
+      "fee": 172762
+}
+
+final: {
+       "revealTxId": "c8ebe0516c46125a37f7c6f0b126b2cb6072e4f09a6c21f5bbf29a35d1a02f46",
+       "commitTxId": "8c9ddd79f88b3b3ce966fae2132c5854f0f3ce19cf1dfabc648888ace7c1a705",
+       "fileSize": 114268,
+       "fee": 58746
+}

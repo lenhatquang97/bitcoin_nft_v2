@@ -1,0 +1,79 @@
+test-inscription.txt: {
+  "commit": "65e168294686643d2e6f2bd6d78b3383496ec1387eed3c9f1429194189cf2025",
+  "inscription": "8eaa6feb81178ece99584b3a21808d50cb4bb35601cca88e994ef52d21e838aei0",
+  "reveal": "8eaa6feb81178ece99584b3a21808d50cb4bb35601cca88e994ef52d21e838ae",
+  "fees": 294,
+  "fileSize": 9
+}
+
+kudo: {
+  "commit": "a8f3e040be738137c41b85ce0f566dc3ba351c8b6877128b70a9239e40d40eb6",
+  "inscription": "9648369c47b93266bec624ee1ade72a74bf7b2709767d4f76c37bbb3f90f6ca4i0",
+  "reveal": "9648369c47b93266bec624ee1ade72a74bf7b2709767d4f76c37bbb3f90f6ca4",
+  "fees": 1720,
+  "fileSize": 5695
+}
+
+Doraemon: {
+  "commit": "4f23d01fd0115c95c1de6cddaaa73dafa593a920bc38ba32b3d9980d8d409ccd",
+  "inscription": "54e6f169c06257b194e4ce5129fde20e837ba36a69d89498f9387077cb78db96i0",
+  "reveal": "54e6f169c06257b194e4ce5129fde20e837ba36a69d89498f9387077cb78db96",
+  "fees": 4158,
+  "fileSize": 15391
+}
+
+4k : {
+  "commit": "f8d64c86889b39415f817ecce7823fa3f4e2770f7b0a6a9f4fc03b087d38f226",
+  "inscription": "e588197a872d822003499662580499d5ec67f7c24eefefaea2e477ebd998747bi0",
+  "reveal": "e588197a872d822003499662580499d5ec67f7c24eefefaea2e477ebd998747b",
+  "fees": 54015,
+  "fileSize": 213442
+}
+
+video: {
+  "commit": "8ae2990e0f51ceca884cb7e867beaaacb6d990e3dd7cb8bf8fcbb348262e74d8",
+  "inscription": "81961c06d9f5f1565941be8ef3a977f5204d1e74c46080aecce0104fff7d9f01i0",
+  "reveal": "81961c06d9f5f1565941be8ef3a977f5204d1e74c46080aecce0104fff7d9f01",
+  "fees": 61534,
+  "fileSize": 243345
+}
+
+50kb: {
+  "commit": "4150e1849a5bc40c9fa73e9fbc7940ac49fefa09543ad4c2e8a96da665419b9e",
+  "inscription": "043e5bbc2adb6a65662697b42a64f6932f6404fca52007a3d2c446e6f685672fi0",
+  "reveal": "043e5bbc2adb6a65662697b42a64f6932f6404fca52007a3d2c446e6f685672f",
+  "fees": 12792,
+  "fileSize": 49500
+}
+
+100kb: {
+  "commit": "7700dedb97320f7d3ae2acbebec2c61ce65d8d25fe089e929c6dd353f04430e5",
+  "inscription": "17a77265767c7394223b8a0d9ef7035288a27d014dc946c2c7f53f9c779f7d04i0",
+  "reveal": "17a77265767c7394223b8a0d9ef7035288a27d014dc946c2c7f53f9c779f7d04",
+  "fees": 25600,
+  "fileSize": 100700
+}
+
+150kb: {
+  "commit": "6f45bb292d4916fcc16e36521676ba86033d5163820b30d6028ae188d7141875",
+  "inscription": "83106b8d6689b485903d4cbc5b6d01c90d559d0e1802a37532e0df0c072862a0i0",
+  "reveal": "83106b8d6689b485903d4cbc5b6d01c90d559d0e1802a37532e0df0c072862a0",
+  "fees": 38855,
+  "fileSize": 153380
+}
+
+1841.mp4: {
+  "commit": "055ad4036cded026763d9e403a2c16fed5a90f63f8bdc634c89af224b3b39fcd",
+  "inscription": "2d4736b08362343efa2e7461b7bcad1150878c1df51dda88d113da090a4c2506i0",
+  "reveal": "2d4736b08362343efa2e7461b7bcad1150878c1df51dda88d113da090a4c2506",
+  "fees": 85770,
+  "fileSize": 339963
+}
+
+final: {
+  "commit": "3c45885822c85ea94e08020b5d35a213e00583f5396159dd6799de0340ae49af",
+  "inscription": "7d3301d4b0f02ed656af9e8bbec8d519fcb52efa48c2d4f98b7cc1c9076c02a4i0",
+  "reveal": "7d3301d4b0f02ed656af9e8bbec8d519fcb52efa48c2d4f98b7cc1c9076c02a4",
+  "fees": 29021,
+  "fileSize": 114268
+}
