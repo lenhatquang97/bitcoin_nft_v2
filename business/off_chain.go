@@ -110,8 +110,6 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	//	"https://amnhacvietthanh.vn/wp-content/uploads/2020/10/Yamaha-C40.jpg",
 	//}
 	//nameSpace := DefaultNameSpace
-
-	fmt.Println("Oh start")
 	// Get Nft Data
 	var dataSend []byte
 	//var contentType string
@@ -146,7 +144,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 			}
 		} else {
 			if isRef {
-				txIdRef = data.(string)
+				txIdRef = data.([]string)[0]
 				dataSend = []byte(txIdRef)
 			} else {
 				stringArr := data.([]string)
@@ -177,7 +175,6 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, err
 	}
 
-	fmt.Println("Input dataSend:", dataSend)
 	fmt.Println("Commit tx fee is: ", estimatedCommitTxFee)
 	fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
 	fmt.Println("Estimated fee is: ", estimatedCommitTxFee+estimatedRevealTxFee)
@@ -498,24 +495,25 @@ func (sv *Server) GetDataSendOnChain(data interface{}, isRef bool) ([]byte, erro
 	}
 }
 
-func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, error) {
+func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, []string, error) {
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	res := make([][]byte, 0)
 	txIds := make([]string, 0)
+	orginalTxIds := make([]string, 0)
 	for i := 0; i < len(utxos); i++ {
 		if utxos[i].Address == address {
 			//100_000_000 is because it's testnet
 			hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 			tx, err := sv.client.GetRawTransaction(hashId)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 
 			witness := tx.MsgTx().TxIn[0].Witness
@@ -528,11 +526,11 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, error) {
 			if isRef {
 				hashId, err = chainhash.NewHashFromStr(string(data))
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
 				tx, err = sv.client.GetRawTransaction(hashId)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
 
 				witness = tx.MsgTx().TxIn[0].Witness
@@ -541,7 +539,10 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, error) {
 				}
 
 				txId = string(data)
+				orginalTxIds = append(orginalTxIds, txId)
 				data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+			} else {
+				orginalTxIds = append(orginalTxIds, utxos[i].TxID)
 			}
 			if data != nil {
 				res = append(res, data)
@@ -550,7 +551,7 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, error) {
 		}
 	}
 
-	return res, txIds, nil
+	return res, txIds, orginalTxIds, nil
 }
 
 func (sv *Server) GetTxSize(txId string) (int64, int, error) {

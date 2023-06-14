@@ -68,7 +68,8 @@ type GetNftFromUtxoRes struct {
 }
 
 type NftFromUtxo struct {
-	HexData  string `json:"hexData"`
-	MimeType string `json:"mimeType"`
-	TxId     string `json:"txId"`
+	HexData    string `json:"hexData"`
+	MimeType   string `json:"mimeType"`
+	TxId       string `json:"txId"`
+	OriginTxId string `json:"originTxId"`
 }

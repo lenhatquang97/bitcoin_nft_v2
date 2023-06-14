@@ -18,6 +18,11 @@ func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef strin
 	if err != nil {
 		return nil, nil, err
 	}
+	fmt.Println("Commit tx length:", len(commitTx.TxIn))
+	for _, e := range commitTx.TxOut {
+		fmt.Println(e.Value)
+	}
+	fmt.Println(amount)
 
 	commitTxHash, err := sv.client.SendRawTransaction(commitTx, false)
 	if err != nil {
@@ -44,14 +49,13 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(utxos, defaultAddress.EncodeAddress(), float64(amount), txIdRef)
+	sendUtxos := utils.GetManyUtxo(client, utxos, defaultAddress.EncodeAddress(), float64(amount), txIdRef)
 	if len(sendUtxos) == 0 {
 		return nil, nil, fmt.Errorf("no utxos")
 	}
-
-	balance, err := utils.GetActualBalance(client, networkConfig.SenderAddress)
-	if err != nil {
-		return nil, nil, err
+	balance := 0
+	for _, sat := range sendUtxos {
+		balance += int(sat.Amount * 100_000_000)
 	}
 
 	pkScript, _ := txscript.PayToAddrScript(defaultAddress)
@@ -101,6 +105,9 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	redeemTx.AddTxOut(redeemTxOut)
 
 	if int64(balance) < amount+fee {
+		fmt.Println(balance)
+		fmt.Println(amount)
+		fmt.Println(fee)
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	}
 

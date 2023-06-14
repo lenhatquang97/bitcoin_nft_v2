@@ -283,7 +283,7 @@ func WrapperGetNftFromUtxo(ctx *gin.Context) {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 	}
 
-	res, txIds, err := sv.GetNftFromUtxo(req.Address)
+	res, txIds, originTxIds, err := sv.GetNftFromUtxo(req.Address)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
@@ -293,20 +293,28 @@ func WrapperGetNftFromUtxo(ctx *gin.Context) {
 	for i, item := range res {
 		tmpMimeType := http.DetectContentType(item)
 		tmpNft := NftFromUtxo{
-			HexData:  hex.EncodeToString(item),
-			MimeType: tmpMimeType,
-			TxId:     txIds[i],
+			HexData:    hex.EncodeToString(item),
+			MimeType:   tmpMimeType,
+			TxId:       txIds[i],
+			OriginTxId: originTxIds[i],
 		}
 		outputRes = append(outputRes, tmpNft)
 	}
 
-	//Hardcored NFT
-	hardCodedNft := NftFromUtxo{
-		HexData:  "31323334350a31323334350a6e6f0a6e6f0a4f4b0a",
-		MimeType: "text/plain; charset=utf-8",
-		TxId:     "f2b49031b2aecc5c87cd71a3dce67bd89201493610f9e329f920968f86402358",
-	}
-	outputRes = append(outputRes, hardCodedNft)
+	//Hardcoded NFT
+	// hardCodedNft := NftFromUtxo{
+	// 	HexData:  "31323334350a31323334350a6e6f0a6e6f0a4f4b0a",
+	// 	MimeType: "text/plain; charset=utf-8",
+	// 	TxId:     "f2b49031b2aecc5c87cd71a3dce67bd89201493610f9e329f920968f86402358",
+	// }
+
+	// hardCodedMp3 := NftFromUtxo{
+	// 	HexData:  SAMPLE_MP3,
+	// 	MimeType: "audio/mpeg",
+	// 	TxId:     "f2b49031b2aecc5c87cd71a3djs67bd89201493610f9e329f920968f86402358",
+	// }
+	// outputRes = append(outputRes, hardCodedNft)
+	// outputRes = append(outputRes, hardCodedMp3)
 
 	ctx.JSON(200, &GetNftFromUtxoRes{
 		Code:    200,
