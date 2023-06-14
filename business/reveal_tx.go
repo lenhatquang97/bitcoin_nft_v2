@@ -85,13 +85,6 @@ func CreateRevealTxObj(client *rpcclient.Client, embeddedData []byte, isRef bool
 	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
 	outputScript, _ := outputScriptBuilder.Script()
 
-	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), params)
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	fmt.Println(address.EncodeAddress())
-
 	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(pubKey)
 
 	tx := wire.NewMsgTx(2)

@@ -13,10 +13,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/mempool"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/btcsuite/btcd/mempool"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -145,7 +146,8 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		} else {
 			if isRef {
 				txIdRef = data.([]string)[0]
-				dataSend = []byte(txIdRef)
+				originTxId := data.([]string)[1]
+				dataSend = []byte(originTxId)
 			} else {
 				stringArr := data.([]string)
 				dataSend, _, err = witnessbtc.ReadFile(stringArr[0])
@@ -538,8 +540,8 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, []string, 
 					continue
 				}
 
-				txId = string(data)
-				orginalTxIds = append(orginalTxIds, txId)
+				originTxId := string(data)
+				orginalTxIds = append(orginalTxIds, originTxId)
 				data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
 			} else {
 				orginalTxIds = append(orginalTxIds, utxos[i].TxID)

@@ -18,12 +18,6 @@ func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef strin
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println("Commit tx length:", len(commitTx.TxIn))
-	for _, e := range commitTx.TxOut {
-		fmt.Println(e.Value)
-	}
-	fmt.Println(amount)
-
 	commitTxHash, err := sv.client.SendRawTransaction(commitTx, false)
 	if err != nil {
 		return nil, nil, err
