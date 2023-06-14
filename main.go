@@ -19,14 +19,6 @@ const (
 )
 
 func main() {
-	//var GlobalNetCfg = server.TestNetConfig
-	//sv, err := server.InitServer()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//sv.DoCommitRevealTransaction(&GlobalNetCfg)
-
 	if len(os.Args) != NUM_OF_PARAM {
 		log.Fatal("Num of args is invalid")
 	}
@@ -39,6 +31,4 @@ func main() {
 		Password:      os.Args[PASSWORD],
 		SenderAddress: os.Args[SENDER_ADDRESS],
 	})
-
-	//witnessbtc.DoFirstTestCaseWithPNG()
 }
