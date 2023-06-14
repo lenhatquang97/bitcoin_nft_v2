@@ -70,12 +70,12 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 	redeemTx.AddTxOut(fakeChangeTxOut)
 
 	//txSize := int64(tx.SerializeSize())
-	feeRate, err := sv.client.EstimateFee(2)
+	feeRate, err := sv.client.EstimateFee(1)
 	if err != nil {
 		return 0, err
 	}
 	txSize := mempool.GetTxVirtualSize(btcutil.NewTx(redeemTx))
-	fee := txSize * int64(feeRate*100_000)
+	fee := txSize * int64(feeRate*100_000) * 3
 	return fee, nil
 }
 
