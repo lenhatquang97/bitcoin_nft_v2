@@ -109,8 +109,6 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	//	"https://amnhacvietthanh.vn/wp-content/uploads/2020/10/Yamaha-C40.jpg",
 	//}
 	//nameSpace := DefaultNameSpace
-
-	fmt.Println("Oh start")
 	// Get Nft Data
 	var dataSend []byte
 	//var contentType string
@@ -145,7 +143,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 			}
 		} else {
 			if isRef {
-				txIdRef = data.(string)
+				txIdRef = data.([]string)[0]
 				dataSend = []byte(txIdRef)
 			} else {
 				stringArr := data.([]string)
