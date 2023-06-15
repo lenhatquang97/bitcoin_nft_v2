@@ -32,7 +32,8 @@ const (
 	OFF_CHAIN         = "off_chain"
 	USER_PASWORD      = "user_password"
 	SeedPhraseLine    = 5
-	ErrorLine         = 6
+	ErrorLine1        = 3
+	ErrorLin2         = 6
 )
 
 type Server struct {
@@ -318,7 +319,8 @@ func (sv *Server) CreateWallet(passphrase string) (string, error) {
 	dataStr := string(data)
 
 	res := strings.Replace(dataStr, USER_PASWORD, passphrase, -1)
-	errMsg := ""
+	errMsg1 := ""
+	errMsg2 := ""
 
 	err = os.WriteFile("create_wallet_result.exp", []byte(res), 0666)
 	if err != nil {
@@ -354,16 +356,25 @@ func (sv *Server) CreateWallet(passphrase string) (string, error) {
 			res = line
 		}
 
-		if count == ErrorLine {
-			errMsg = line
+		if count == ErrorLine1 {
+			errMsg1 = line
+		}
+
+		if count == ErrorLin2 {
+			errMsg2 = line
 			break
 		}
 	}
 
 	subStr := "already exists"
-	idx := strings.Index(errMsg, subStr)
+	idx := strings.Index(errMsg1, subStr)
 	if idx > 0 {
-		return "", errors.New(errMsg)
+		return "", errors.New(errMsg1)
+	}
+
+	idx = strings.Index(errMsg2, subStr)
+	if idx > 0 {
+		return "", errors.New(errMsg2)
 	}
 
 	return res, nil
