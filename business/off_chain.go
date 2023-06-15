@@ -4,7 +4,6 @@ import (
 	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/db/sqlc"
-	"bitcoin_nft_v2/gobcy"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"bitcoin_nft_v2/witnessbtc"
@@ -474,18 +473,6 @@ func (sv *Server) SetMode(mode string) error {
 	return nil
 }
 
-func (sv *Server) GetTx(txId string) (interface{}, error) {
-	//using a struct literal
-	bc := gobcy.API{Token: "0e3279a9ec4e4859ba55945c6a29a6ec", Coin: "btc", Chain: "test3"}
-
-	res, err := bc.GetTX(txId, make(map[string]string))
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	return res, nil
-}
 func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, error) {
 	var nftData []*NftData
 	fmt.Println(data)

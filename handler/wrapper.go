@@ -249,33 +249,6 @@ func WrapperCreateWallet(ctx *gin.Context) {
 	})
 }
 
-func WrapperGetTx(ctx *gin.Context) {
-
-	var req GetTxRequest
-	err := ctx.ShouldBindQuery(&req)
-	if err != nil {
-		fmt.Println(err)
-		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
-	}
-
-	if req.TxID == "" {
-		fmt.Println(ctx.Params)
-		ctx.JSON(400, WrapperErrorMsgResponse(400, "txId is required"))
-		return
-	}
-
-	data, err := sv.GetTx(req.TxID)
-	if err != nil {
-		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
-	}
-
-	ctx.JSON(200, &GetTxResponse{
-		Code:    200,
-		Message: "OK",
-		Data:    data,
-	})
-}
-
 func WrapperGetNftFromUtxo(ctx *gin.Context) {
 	var req GetNftFromUtxo
 	err := ctx.ShouldBindQuery(&req)

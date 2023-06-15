@@ -4,24 +4,13 @@ import (
 	"bitcoin_nft_v2/db/sqlc"
 	"database/sql"
 	"fmt"
-	"log"
-	"time"
-
 	postgres_migrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"log"
 )
 
 const (
 	dsnTemplate = "postgres://%v:%v@%v:%d/%v?sslmode=%v"
-)
-
-var (
-	// DefaultPostgresFixtureLifetime is the default maximum time a Postgres
-	// test fixture is being kept alive. After that time the docker
-	// container will be terminated forcefully, even if the tests aren't
-	// fully executed yet. So this time needs to be chosen correctly to be
-	// longer than the longest expected individual test run time.
-	DefaultPostgresFixtureLifetime = 10 * time.Minute
 )
 
 // PostgresConfig holds the postgres database configuration.
@@ -61,8 +50,6 @@ type PostgresStore struct {
 	*BaseDB
 }
 
-// NewPostgresStore creates a new store that is backed by a Postgres database
-// backend.
 func NewPostgresStore(cfg *PostgresConfig) (*PostgresStore, error) {
 	log.Println("Using SQL database '%s'", cfg.DSN(true))
 
@@ -72,12 +59,6 @@ func NewPostgresStore(cfg *PostgresConfig) (*PostgresStore, error) {
 	}
 
 	if !cfg.SkipMigrations {
-		// Now that the database is open, populate the database with
-		// our set of schemas based on our embedded in-memory file
-		// system.
-		//
-		// First, we'll need to open up a new migration instance for
-		// our current target database: sqlite.
 		driver, err := postgres_migrate.WithInstance(
 			rawDb, &postgres_migrate.Config{},
 		)
@@ -109,21 +90,3 @@ func NewPostgresStore(cfg *PostgresConfig) (*PostgresStore, error) {
 		},
 	}, nil
 }
-
-// NewTestPostgresDB is a helper function that creates a Postgres database for
-//// testing.
-//func NewTestPostgresDB(t *testing.T) *PostgresStore {
-//	t.Helper()
-//
-//	t.Logf("Creating new Postgres DB for testing")
-//
-//	sqlFixture := NewTestPgFixture(t, DefaultPostgresFixtureLifetime)
-//	store, err := NewPostgresStore(sqlFixture.GetConfig())
-//	require.NoError(t, err)
-//
-//	t.Cleanup(func() {
-//		sqlFixture.TearDown(t)
-//	})
-//
-//	return store
-//}
