@@ -13,7 +13,7 @@ import (
 )
 
 func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef string, amount int64, fee int64) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, fee)
+	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, fee, sv.mode)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -25,7 +25,7 @@ func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef strin
 	return commitTxHash, wif, nil
 }
 
-func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, isRef bool, txIdRef string, fee int64) (*wire.MsgTx, *btcutil.WIF, error) {
+func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, isRef bool, txIdRef string, fee int64, mode string) (*wire.MsgTx, *btcutil.WIF, error) {
 	//Step 1: Get private key
 	defaultAddress, err := client.GetAccountAddress("default")
 	if err != nil {
@@ -57,7 +57,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	// Step 3: extracting destination address as []byte from function argument (destination string)
-	hashLockScript, err := utils.CreateInscriptionScriptV2(wif.PrivKey.PubKey(), embeddedData, isRef)
+	hashLockScript, err := utils.CreateInscriptionScriptV2(wif.PrivKey.PubKey(), embeddedData, isRef, mode)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error building script: %v", err)
 	}

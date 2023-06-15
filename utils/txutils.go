@@ -40,7 +40,7 @@ func CreateInscriptionScript(pubKey *secp256k1.PublicKey, embeddedData []byte) (
 	return hashLockScript, nil
 }
 
-func CreateInscriptionScriptV2(pubKey *secp256k1.PublicKey, embeddedData []byte, isRef bool) ([]byte, error) {
+func CreateInscriptionScriptV2(pubKey *secp256k1.PublicKey, embeddedData []byte, isRef bool, mode string) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
 	builder.AddData(schnorr.SerializePubKey(pubKey))
 	builder.AddOp(txscript.OP_CHECKSIG)
@@ -49,6 +49,10 @@ func CreateInscriptionScriptV2(pubKey *secp256k1.PublicKey, embeddedData []byte,
 	chunks := ChunkSlice(embeddedData, 500)
 	flagStart := "m25start"
 	flagEnd := "m25end"
+	if mode == "off_chain" {
+		flagStart = "m25off-chain-start"
+		flagEnd = "m25off-chain-end"
+	}
 	flagRef := "-ref"
 	flagData := "-data"
 	if isRef {

@@ -1,6 +1,7 @@
 package business
 
 import (
+	"bitcoin_nft_v2/cmd_utils"
 	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/db/sqlc"
@@ -16,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/btcsuite/btcd/mempool"
 
@@ -24,14 +26,13 @@ import (
 )
 
 const (
-	SampleSatoshi      = 20000
-	PassphraseInWallet = "12345"
-	PassphraseTimeout  = 3
-	ON_CHAIN           = "on_chain"
-	OFF_CHAIN          = "off_chain"
-	USER_PASWORD       = "user_password"
-	LEFT_STR           = "Your wallet generation seed is:"
-	RIGHT_STR          = "IMPORTANT: Keep the seed in a safe place as you"
+	SampleSatoshi     = 20000
+	PassphraseTimeout = 3
+	ON_CHAIN          = "on_chain"
+	OFF_CHAIN         = "off_chain"
+	USER_PASWORD      = "user_password"
+	SeedPhraseLine    = 5
+	ErrorLine         = 6
 )
 
 type Server struct {
@@ -223,7 +224,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, 0, estimatedRevealTxFee)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, 0, estimatedRevealTxFee, sv.mode)
 	if err != nil {
 		fmt.Println(err)
 		return "", "", 0, err
@@ -308,11 +309,6 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 }
 
 func (sv *Server) CreateWallet(passphrase string) (string, error) {
-	//res, err := sv.client.CreateW	allet(name, rpcclient.WithCreateWalletPassphrase(passphrase))
-	//if err != nil {
-	//	return err
-	//}
-
 	data, err := os.ReadFile("./template_create_wallet.exp")
 	if err != nil {
 		fmt.Println(err)
@@ -322,6 +318,7 @@ func (sv *Server) CreateWallet(passphrase string) (string, error) {
 	dataStr := string(data)
 
 	res := strings.Replace(dataStr, USER_PASWORD, passphrase, -1)
+	errMsg := ""
 
 	err = os.WriteFile("create_wallet_result.exp", []byte(res), 0666)
 	if err != nil {
@@ -329,29 +326,47 @@ func (sv *Server) CreateWallet(passphrase string) (string, error) {
 		return "", err
 	}
 
-	cmd := &exec.Cmd{
-		Path:   "./create_wallet_result.exp",
-		Stderr: os.Stderr,
+	cmd := &cmd_utils.Cmd{
+		Cmd: &exec.Cmd{
+			Path: "./create_wallet_result.exp",
+		},
+		InputChan:  make(chan string),
+		OutputChan: make(chan string),
 	}
 
-	output, err := cmd.Output()
-	fmt.Println(err)
-	fmt.Println(string(output))
-
-	resStr := string(output)
-	l := strings.Index(resStr, LEFT_STR)
-	r := strings.Index(resStr, RIGHT_STR)
-
-	if l+len(LEFT_STR) > r {
-		return "", errors.New("seed is empty")
-	}
-
-	err = os.Remove("./create_wallet_result.exp")
+	err = cmd.Start()
 	if err != nil {
 		return "", err
 	}
 
-	return resStr[l+len(LEFT_STR) : r], err
+	time.Sleep(100 * time.Millisecond)
+
+	count := 0
+	for {
+		count += 1
+		line, ok := <-cmd.OutputChan
+
+		if !ok {
+			break
+		}
+
+		if count == SeedPhraseLine {
+			res = line
+		}
+
+		if count == ErrorLine {
+			errMsg = line
+			break
+		}
+	}
+
+	subStr := "already exists"
+	idx := strings.Index(errMsg, subStr)
+	if idx > 0 {
+		return "", errors.New(errMsg)
+	}
+
+	return res, nil
 }
 
 func (sv *Server) GetNftData() {
@@ -464,7 +479,7 @@ func (sv *Server) ExportProof(url string) (*NftData, error) {
 
 	_, err = tree.Delete(context.Background(), key)
 	if err != nil {
-		fmt.Println("Delete leaf after reveal tx failed", err)
+		fmt.Println("Delete leaf after reveal tx failed: ", err)
 	}
 
 	nodeHash := leaf.NodeHash()

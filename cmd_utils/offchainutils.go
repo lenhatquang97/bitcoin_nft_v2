@@ -1,4 +1,4 @@
-package offchainnft
+package cmd_utils
 
 import (
 	"crypto/sha256"

@@ -62,7 +62,7 @@ func PrepareInscriptionData(data string, isRef bool) ([]byte, error) {
 	}
 
 	privKey, _ := btcec.NewPrivateKey()
-	embeddedData, _ := utils.CreateInscriptionScriptV2(privKey.PubKey(), rawData, isRef)
+	embeddedData, _ := utils.CreateInscriptionScriptV2(privKey.PubKey(), rawData, isRef, "on_chain")
 	return embeddedData, nil
 }
 
