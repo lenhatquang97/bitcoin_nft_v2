@@ -356,3 +356,19 @@ func WrapperGetTxSize(ctx *gin.Context) {
 		SerializeSize: serializeSize,
 	})
 }
+
+func WrapperRenderTree(ctx *gin.Context) {
+	err := sv.RenderTree()
+	if err != nil {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+		return
+	}
+
+	ctx.JSON(200, &struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	}{
+		Code:    200,
+		Message: "OK",
+	})
+}

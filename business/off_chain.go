@@ -9,6 +9,7 @@ import (
 	"bitcoin_nft_v2/utils"
 	"bitcoin_nft_v2/witnessbtc"
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"errors"
@@ -116,6 +117,8 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	//var contentType string
 	var err error
 	txIdRef := ""
+	var keys [][32]byte
+	var leafHash []nft_tree.NodeHash
 	if isSendNft {
 		if sv.mode == OFF_CHAIN {
 			var nftData []*NftData
@@ -137,7 +140,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 				})
 			}
 
-			dataSend, err = NewRootHashForReceiver(nftData)
+			dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
 			if err != nil {
 				fmt.Println("Compute root hash for receiver error")
 				fmt.Println(err)
@@ -210,36 +213,35 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, err
 	}
 
-	//txCreator := func(tx *sql.Tx) db.TreeStore {
-	//	return sv.PostgresDB.WithTx(tx)
-	//}
-	//
-	//treeDB := db.NewTransactionExecutor[db.TreeStore](sv.PostgresDB, txCreator)
-	//
-	//taroTreeStore := db.NewTaroTreeStore(treeDB, DefaultNameSpace)
-	//
-	//tree := nft_tree.NewFullTree(taroTreeStore)
-	//
-	//_, err = tree.Delete(context.Background(), key)
-	//if err != nil {
-	//	fmt.Println("Delete leaf after reveal tx failed", err)
-	//}
-	// We use the default, in-memory store that doesn't actually use the
-	// context.
-	//updatedTree, err := tree.Insert(context.Background(), key, leaf)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//updatedRoot, err := updatedTree.Root(context.Background())
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//rootHash := utils.GetNftRoot(updatedRoot)
-	//EmbeddedData = rootHash
+	if sv.mode == OFF_CHAIN {
+		for i, key := range keys {
+
+			txCreator := func(tx *sql.Tx) db.TreeStore {
+				return sv.DB.WithTx(tx)
+			}
+
+			treeDB := db.NewTransactionExecutor[db.TreeStore](sv.DB, txCreator)
+
+			taroTreeStore := db.NewTaroTreeStore(treeDB)
+
+			tree := nft_tree.NewFullTree(taroTreeStore)
+
+			_, err = tree.Delete(context.Background(), key)
+			if err != nil {
+				fmt.Println("Delete leaf after reveal tx failed", err)
+			}
+
+			destArray := make([]byte, len(leafHash[i]))
+
+			// Copy the elements from source array to destination array
+			copy(destArray, leafHash[i][:])
+
+			_, err = sv.DB.DeleteNode(context.Background(), destArray)
+			if err != nil {
+				fmt.Println("Delete leaf after reveal tx failed", err)
+			}
+		}
+	}
 
 	fmt.Println("===================================Checkpoint 2====================================")
 	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
@@ -352,6 +354,8 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 		Memo: memo,
 	})
 
+	fmt.Println("Key here: ", key)
+
 	// Init Root Hash For Receiver
 	leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
 	leaf.NodeHash()
@@ -368,6 +372,8 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 
 	//We use the default, in-memory store that doesn't actually use the
 	//context.
+
+	fmt.Println("Hash is: ", leaf.NodeHash().String())
 	updatedTree, err := tree.Insert(context.Background(), key, leaf)
 	if err != nil {
 		fmt.Println(err)
@@ -427,6 +433,35 @@ func (sv *Server) ExportProof(url string) (*NftData, error) {
 		return nil, err
 	}
 
+	dataByte, key := ComputeNftDataByte(nftDataRes)
+
+	leaf := nft_tree.NewLeafNode(dataByte, 0) // C
+	txCreator := func(tx *sql.Tx) db.TreeStore {
+		return sv.DB.WithTx(tx)
+	}
+
+	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.DB, txCreator)
+
+	taroTreeStore := db.NewTaroTreeStore(treeDB)
+
+	tree := nft_tree.NewFullTree(taroTreeStore)
+
+	_, err = tree.Delete(context.Background(), key)
+	if err != nil {
+		fmt.Println("Delete leaf after reveal tx failed", err)
+	}
+
+	nodeHash := leaf.NodeHash()
+	destArray := make([]byte, len(nodeHash))
+
+	// Copy the elements from source array to destination array
+	copy(destArray, nodeHash[:])
+
+	_, err = sv.DB.DeleteNode(context.Background(), destArray)
+	if err != nil {
+		fmt.Println("Delete leaf after reveal tx failed", err)
+	}
+
 	return nftDataRes, nil
 }
 
@@ -471,7 +506,7 @@ func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, err
 		})
 	}
 
-	dataSend, err := NewRootHashForReceiver(nftData)
+	dataSend, _, _, err := NewRootHashForReceiver(nftData)
 	if err != nil {
 		fmt.Println("Compute root hash for receiver error")
 		fmt.Println(err)
@@ -570,4 +605,104 @@ func (sv *Server) GetTxSize(txId string) (int64, int, error) {
 	serializeSize := tx.MsgTx().SerializeSize()
 
 	return virtualSize, serializeSize, nil
+}
+
+func (sv *Server) RenderTree() error {
+	// get all data
+	nftData, err := sv.ViewNftData()
+	if err != nil {
+		return err
+	}
+
+	input := make(map[[sha256.Size]byte]nft_tree.NftData)
+	for _, item := range nftData {
+		_, key := ComputeNftDataByte(item)
+		input[key] = nft_tree.NftData{
+			ID:   item.ID,
+			Url:  item.Url,
+			Memo: item.Memo,
+		}
+	}
+
+	txCreator := func(tx *sql.Tx) db.TreeStore {
+		return sv.DB.WithTx(tx)
+	}
+
+	treeDB := db.NewTransactionExecutor[db.TreeStore](sv.DB, txCreator)
+
+	taroTreeStore := db.NewTaroTreeStore(treeDB)
+
+	tree := nft_tree.NewFullTree(taroTreeStore)
+
+	renderedTree, err := tree.RenderTree(context.Background(), input)
+	if err != nil {
+		return err
+	}
+
+	printTree(renderedTree, 3)
+	return nil
+}
+
+func getMaxWidth(root *nft_tree.VirtualTree, level int) int {
+	if root == nil {
+		return 0
+	}
+
+	if level == 1 {
+		return 1
+	}
+
+	leftWidth := getMaxWidth(root.Left, level-1)
+	rightWidth := getMaxWidth(root.Right, level-1)
+
+	return leftWidth + rightWidth
+}
+
+func printTree(root *nft_tree.VirtualTree, level int) {
+	if root == nil {
+		return
+	}
+
+	height := getHeight(root)
+	maxWidth := getMaxWidth(root, height)
+	printTreeHelper(root, "", maxWidth, height, level)
+}
+
+func printTreeHelper(root *nft_tree.VirtualTree, prefix string, maxWidth, currLevel, targetLevel int) {
+	if root == nil {
+		return
+	}
+
+	if currLevel == targetLevel {
+		currStr := "———"
+		prevStr := prefix
+
+		fmt.Print(prefix)
+		fmt.Printf("%s %v\n", currStr, root.Data)
+
+		newPrefix := prefix
+		if prevStr != "" {
+			newPrefix = strings.Replace(prevStr, "———", "   |", 1)
+		}
+
+		printTreeHelper(root.Left, newPrefix+"   |", maxWidth, currLevel-1, targetLevel-1)
+		printTreeHelper(root.Right, prevStr, maxWidth, currLevel-1, targetLevel-1)
+	} else {
+		printTreeHelper(root.Left, prefix, maxWidth, currLevel-1, targetLevel)
+		printTreeHelper(root.Right, prefix, maxWidth, currLevel-1, targetLevel)
+	}
+}
+
+func getHeight(root *nft_tree.VirtualTree) int {
+	if root == nil {
+		return 0
+	}
+
+	leftHeight := getHeight(root.Left)
+	rightHeight := getHeight(root.Right)
+
+	if leftHeight > rightHeight {
+		return leftHeight + 1
+	}
+	return rightHeight + 1
 }

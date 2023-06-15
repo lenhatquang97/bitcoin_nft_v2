@@ -296,3 +296,97 @@ func VerifyMerkleProof(key [hashSize]byte, leaf *LeafNode, proof *Proof,
 
 	return IsEqualNode(proof.Root(key, leaf), root)
 }
+
+func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftData) (*VirtualTree, error) {
+	// get all data from db: ref to walk down func
+	virtualTree := NewVirtualTree()
+	currentTree := virtualTree
+
+	err := t.store.View(ctx, func(tx TreeStoreViewTx) error {
+		for key := range data {
+			current, err := tx.RootNode()
+			if err != nil {
+				return err
+			}
+
+			var leaf *LeafNode
+			for i := 0; i <= lastBitIndex; i++ {
+				left, right, err := tx.GetChildren(i, current.NodeHash())
+				if err != nil {
+					return err
+				}
+
+				//var next, sibling Node
+				var next Node
+				if bitIndex(uint8(i), &key) == 0 {
+					if currentTree.Left == nil {
+						currentTree.Left = NewVirtualTree()
+					}
+
+					if i == lastBitIndex {
+						currentTree.Left = NewVirtualTree()
+						currentTree = currentTree.Left
+						leaf = left.(*LeafNode)
+						continue
+					}
+					currentTree = currentTree.Left
+					branchNode := left.(*BranchNode)
+					currentTree.Hash = branchNode.nodeHash
+					currentTree.Sum = branchNode.sum
+					//next, sibling = left, right
+					next = left
+				} else {
+					if currentTree.Right == nil {
+						currentTree.Right = NewVirtualTree()
+					}
+
+					if i == lastBitIndex {
+						currentTree.Right = NewVirtualTree()
+						currentTree = currentTree.Right
+						leaf = right.(*LeafNode)
+						continue
+					}
+					currentTree = currentTree.Right
+					branchNode := right.(*BranchNode)
+					currentTree.Hash = branchNode.nodeHash
+					currentTree.Sum = branchNode.sum
+					//next, sibling = right, left
+					next = right
+				}
+
+				current = next
+			}
+
+			if leaf == nil {
+				continue
+			}
+
+			currentTree.Hash = leaf.nodeHash
+			currentTree.Value = leaf.Value
+			currentTree.Sum = &leaf.sum
+
+			value := data[key]
+			currentTree.Data = &value
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get all data and compute key
+
+	// mapping data into map
+
+	// call recursion to fetch this map into tree
+
+	// demo send tree and fetch this tree again
+
+	// get the leaf by key in this tree & data
+
+	// show the data inactive?
+
+	return virtualTree, nil
+}

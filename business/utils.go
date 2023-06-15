@@ -30,30 +30,33 @@ func WrapperError(errStr string) error {
 	return errors.New(errStr)
 }
 
-func NewRootHashForReceiver(nftData []*NftData) ([]byte, error) {
+func NewRootHashForReceiver(nftData []*NftData) ([]byte, [][32]byte, []nft_tree.NodeHash, error) {
 	tree := nft_tree.NewCompactedTree(nft_tree.NewDefaultStore())
 
+	var keys [][32]byte
 	var updatedRoot *nft_tree.BranchNode
+	var leafHash []nft_tree.NodeHash
 	for _, item := range nftData {
 		// Compute Nft Data Info
 		dataByte, key := ComputeNftDataByte(item)
 
+		keys = append(keys, key)
 		// Init Root Hash For Receiver
 		leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
-		leaf.NodeHash()
+		leafHash = append(leafHash, leaf.NodeHash())
 
 		updatedTree, err := tree.Insert(context.TODO(), key, leaf)
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 
 		updatedRoot, err = updatedTree.Root(context.Background())
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	return utils.GetNftRoot(updatedRoot), nil
+	return utils.GetNftRoot(updatedRoot), keys, leafHash, nil
 }
 
 func FileSha256(filePath string) (string, error) {
