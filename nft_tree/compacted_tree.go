@@ -4,26 +4,18 @@ import (
 	"context"
 )
 
-// CompactedTree represents a compacted Merkle-Sum Sparse Merkle Tree (MS-SMT).
-// The tree has the same properties as a normal MS-SMT tree and is able to
-// create the same proofs and same root as the FullTree implemented in this
-// package. The additional benefit of using the CompactedTree is that it will
-// greatly reduce storage access resulting in more performant access when used
-// for large trees.
 type CompactedTree struct {
 	store TreeStore
 }
 
 var _ Tree = (*CompactedTree)(nil)
 
-// NewCompactedTree initializes an empty MS-SMT backed by `store`.
 func NewCompactedTree(store TreeStore) *CompactedTree {
 	return &CompactedTree{
 		store: store,
 	}
 }
 
-// Root returns the root node of the MS-SMT.
 func (t *CompactedTree) Root(ctx context.Context) (*BranchNode, error) {
 	var root Node
 	err := t.store.View(ctx, func(tx TreeStoreViewTx) error {
@@ -38,8 +30,6 @@ func (t *CompactedTree) Root(ctx context.Context) (*BranchNode, error) {
 	return root.(*BranchNode), nil
 }
 
-// stepOrder orders the passed branches according to our path given the key and
-// the height.
 func stepOrder(height int, key *[32]byte, left, right Node) (Node, Node) {
 	if bitIndex(uint8(height), key) == 0 {
 		return left, right
@@ -48,8 +38,6 @@ func stepOrder(height int, key *[32]byte, left, right Node) (Node, Node) {
 	return right, left
 }
 
-// walkDown walks down the tree from the root node to the leaf indexed by `key`.
-// The leaf node found is returned.
 func (t *CompactedTree) walkDown(tx TreeStoreViewTx, key *[hashSize]byte,
 	iter iterFunc) (*LeafNode, error) {
 
@@ -67,19 +55,12 @@ func (t *CompactedTree) walkDown(tx TreeStoreViewTx, key *[hashSize]byte,
 
 		switch node := next.(type) {
 		case *CompactedLeafNode:
-			// Our next node is a compacted leaf. We just need to
-			// expand it so we can continue our walk down the tree.
 			next = node.Extract(i)
 
-			// Sibling might be a compacted leaf too, in which case
-			// we need to extract it as well.
 			if compSibling, ok := sibling.(*CompactedLeafNode); ok {
 				sibling = compSibling.Extract(i)
 			}
 
-			// Now that all required branches are reconstructed we
-			// can continue the search for the leaf matching the
-			// passed key.
 			for j := i; j <= lastBitIndex; j++ {
 				if iter != nil {
 					err := iter(j, next, sibling, current)
@@ -90,9 +71,6 @@ func (t *CompactedTree) walkDown(tx TreeStoreViewTx, key *[hashSize]byte,
 				current = next
 
 				if j < lastBitIndex {
-					// Since we have all the branches we
-					// need extracted already we can just
-					// continue walking down.
 					branch := current.(*BranchNode)
 					next, sibling = stepOrder(
 						j+1, key, branch.Left,
@@ -117,9 +95,6 @@ func (t *CompactedTree) walkDown(tx TreeStoreViewTx, key *[hashSize]byte,
 	return current.(*LeafNode), nil
 }
 
-// merge is a helper function to create the common subtree from two leafs lying
-// on the same (partial) path. The resulting subtree contains branch nodes from
-// diverging bit of the passed key's.
 func (t *CompactedTree) merge(tx TreeStoreUpdateTx, height int, key1 [32]byte,
 	leaf1 *LeafNode, key2 [32]byte, leaf2 *LeafNode) (*BranchNode, error) {
 
@@ -270,7 +245,6 @@ func (t *CompactedTree) insert(tx TreeStoreUpdateTx, key *[hashSize]byte,
 	return branch, nil
 }
 
-// Insert inserts a leaf node at the given key within the MS-SMT.
 func (t *CompactedTree) Insert(ctx context.Context, key [hashSize]byte,
 	leaf *LeafNode) (Tree, error) {
 
@@ -296,7 +270,6 @@ func (t *CompactedTree) Insert(ctx context.Context, key [hashSize]byte,
 	return t, nil
 }
 
-// Delete deletes the leaf node found at the given key within the MS-SMT.
 func (t *CompactedTree) Delete(ctx context.Context, key [hashSize]byte) (
 	Tree, error) {
 
@@ -322,7 +295,6 @@ func (t *CompactedTree) Delete(ctx context.Context, key [hashSize]byte) (
 	return t, nil
 }
 
-// Get returns the leaf node found at the given key within the MS-SMT.
 func (t *CompactedTree) Get(ctx context.Context, key [hashSize]byte) (
 	*LeafNode, error) {
 
@@ -340,10 +312,6 @@ func (t *CompactedTree) Get(ctx context.Context, key [hashSize]byte) (
 	return leaf, nil
 }
 
-// MerkleProof generates a merkle proof for the leaf node found at the given key
-// within the MS-SMT. If a leaf node does not exist at the given key, then the
-// proof should be considered a non-inclusion proof. This is noted by the
-// returned `Proof` containing an empty leaf.
 func (t *CompactedTree) MerkleProof(ctx context.Context, key [hashSize]byte) (
 	*Proof, error) {
 

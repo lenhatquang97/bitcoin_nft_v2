@@ -289,14 +289,6 @@ func (t *FullTree) MerkleProof(ctx context.Context, key [hashSize]byte) (
 	return NewProof(proof), nil
 }
 
-// VerifyMerkleProof determines whether a merkle proof for the leaf found at the
-// given key is valid.
-func VerifyMerkleProof(key [hashSize]byte, leaf *LeafNode, proof *Proof,
-	root Node) bool {
-
-	return IsEqualNode(proof.Root(key, leaf), root)
-}
-
 func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftData) (*VirtualTree, error) {
 	// get all data from db: ref to walk down func
 	virtualTree := NewVirtualTree()
