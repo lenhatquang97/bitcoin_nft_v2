@@ -15,16 +15,14 @@ type MyUtxo struct {
 	Amount float64
 }
 
-func GetManyUtxo(client *rpcclient.Client, utxos []btcjson.ListUnspentResult, address string, amount float64, specialTxId string) []*MyUtxo {
+func GetManyUtxo(client *rpcclient.Client, utxos []btcjson.ListUnspentResult, amount float64, specialTxId string) []*MyUtxo {
 	var myUtxos []*MyUtxo
 	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == address {
-			myUtxos = append(myUtxos, &MyUtxo{
-				TxID:   utxos[i].TxID,
-				Vout:   utxos[i].Vout,
-				Amount: utxos[i].Amount,
-			})
-		}
+		myUtxos = append(myUtxos, &MyUtxo{
+			TxID:   utxos[i].TxID,
+			Vout:   utxos[i].Vout,
+			Amount: utxos[i].Amount,
+		})
 	}
 	var res []*MyUtxo
 	// fistly choose utxo with tx id

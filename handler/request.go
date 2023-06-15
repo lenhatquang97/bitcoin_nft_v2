@@ -4,7 +4,6 @@ package handler
 type SendRequest struct {
 	Address    string   `json:"address"`
 	Passphrase string   `json:"passphrase"`
-	Amount     int64    `json:"amount"`
 	IsSendNFT  bool     `json:"isSendNft"`
 	IsRef      bool     `json:"isRef"`
 	Urls       []string `json:"urls"`
@@ -43,19 +42,14 @@ type CreateWalletRequest struct {
 
 // Config config
 type Config struct {
-	Mode          string
-	Network       string
-	Host          string
-	User          string
-	Password      string
-	SenderAddress string
-	Port          string
+	Mode     string
+	Network  string
+	Host     string
+	User     string
+	Password string
+	Port     string
 }
 
 type GetTxRequest struct {
 	TxID string `json:"txId" form:"txId"`
-}
-
-type GetNftFromUtxo struct {
-	Address string `json:"address" form:"address"`
 }

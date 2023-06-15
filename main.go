@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	NUM_OF_PARAM     = 7
+	NUM_OF_PARAM     = 6
 	CHAIN_MODE       = 1
 	NETWORK          = 2
 	HOST             = 3
@@ -24,11 +24,9 @@ func main() {
 	}
 
 	handler.Run(&handler.Config{
-		Mode:          os.Args[CHAIN_MODE],
-		Network:       os.Args[NETWORK],
-		Host:          os.Args[HOST],
-		User:          os.Args[USER],
-		Password:      os.Args[PASSWORD],
-		SenderAddress: os.Args[SENDER_ADDRESS],
-	})
+		Mode:     os.Args[CHAIN_MODE],
+		Network:  os.Args[NETWORK],
+		Host:     os.Args[HOST],
+		User:     os.Args[USER],
+		Password: os.Args[PASSWORD]})
 }

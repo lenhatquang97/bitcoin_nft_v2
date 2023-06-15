@@ -18,7 +18,7 @@ import (
 Reveal transaction
 */
 
-func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, isRef bool, toAddress string, fee int64, amount int64) (*chainhash.Hash, error) {
+func ExecuteRevealTransaction(client *rpcclient.Client, revealTxInput *RevealTxInput, data []byte, isRef bool, toAddress string, amount int64, fee int64) (*chainhash.Hash, error) {
 	revealTx, err := RevealTx(client, data, isRef, *revealTxInput.CommitTxHash, *revealTxInput.CommitOutput, revealTxInput.Idx, revealTxInput.Wif.PrivKey, revealTxInput.ChainConfig, toAddress, fee, amount)
 	if err != nil {
 		return nil, err

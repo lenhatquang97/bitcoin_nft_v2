@@ -24,6 +24,7 @@ import (
 )
 
 const (
+	SampleSatoshi      = 20000
 	PassphraseInWallet = "12345"
 	PassphraseTimeout  = 3
 	ON_CHAIN           = "on_chain"
@@ -63,7 +64,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	}, nil
 }
 
-func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data interface{}, passphrase string) (int64, error) {
+func (sv *Server) CalculateFee(toAddress string, isRef bool, data interface{}, passphrase string) (int64, error) {
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
@@ -87,12 +88,12 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 	}
 
 	//Step 3: Calculate fee (commit and revealTxFee)
-	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount, isRef)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, SampleSatoshi, isRef)
 	if err != nil {
 		return 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress, amount)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress, SampleSatoshi)
 	if err != nil {
 		return 0, err
 	}
@@ -104,7 +105,7 @@ func (sv *Server) CalculateFee(toAddress string, amount int64, isRef bool, data 
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, string, int64, error) {
+func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -168,13 +169,21 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		return "", "", 0, err
 	}
 
+	if toAddress == "default" {
+		selfAddress, err := sv.client.GetAccountAddress("default")
+		if err != nil {
+			return "", "", 0, err
+		}
+		toAddress = selfAddress.EncodeAddress()
+	}
+
 	//Step 3: Calculate fee (commit and revealTxFee)
-	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, amount, isRef)
+	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, SampleSatoshi, isRef)
 	if err != nil {
 		return "", "", 0, err
 	}
 
-	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress, amount)
+	estimatedRevealTxFee, err := FakeRevealTxFee(sv, dataSend, isRef, toAddress, SampleSatoshi)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -183,7 +192,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 	fmt.Println("Reveal tx fee is: ", estimatedRevealTxFee)
 	fmt.Println("Estimated fee is: ", estimatedCommitTxFee+estimatedRevealTxFee)
 
-	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, txIdRef, estimatedRevealTxFee+amount, estimatedCommitTxFee)
+	commitTxHash, wif, err := ExecuteCommitTransaction(sv, dataSend, isRef, txIdRef, estimatedRevealTxFee, estimatedCommitTxFee)
 	if err != nil {
 		return "", "", 0, err
 	}
@@ -206,7 +215,7 @@ func (sv *Server) Send(toAddress string, amount int64, isSendNft bool, isRef boo
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, estimatedRevealTxFee, amount)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, 0, estimatedRevealTxFee)
 	if err != nil {
 		fmt.Println(err)
 		return "", "", 0, err
@@ -519,7 +528,7 @@ func (sv *Server) GetDataSendOnChain(data interface{}, isRef bool) ([]byte, erro
 	}
 }
 
-func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, []string, error) {
+func (sv *Server) GetAllNfts() ([][]byte, []string, []string, error) {
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
 		return nil, nil, nil, err
@@ -529,49 +538,47 @@ func (sv *Server) GetNftFromUtxo(address string) ([][]byte, []string, []string, 
 	txIds := make([]string, 0)
 	orginalTxIds := make([]string, 0)
 	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == address {
-			//100_000_000 is because it's testnet
-			hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
+		//100_000_000 is because it's testnet
+		hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		tx, err := sv.client.GetRawTransaction(hashId)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		witness := tx.MsgTx().TxIn[0].Witness
+		if len(witness) != 3 {
+			continue
+		}
+
+		txId := utxos[i].TxID
+		data, isRef := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+		if isRef {
+			hashId, err = chainhash.NewHashFromStr(string(data))
 			if err != nil {
-				return nil, nil, nil, err
+				continue
 			}
-			tx, err := sv.client.GetRawTransaction(hashId)
+			tx, err = sv.client.GetRawTransaction(hashId)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 
-			witness := tx.MsgTx().TxIn[0].Witness
+			witness = tx.MsgTx().TxIn[0].Witness
 			if len(witness) != 3 {
 				continue
 			}
 
-			txId := utxos[i].TxID
-			data, isRef := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
-			if isRef {
-				hashId, err = chainhash.NewHashFromStr(string(data))
-				if err != nil {
-					return nil, nil, nil, err
-				}
-				tx, err = sv.client.GetRawTransaction(hashId)
-				if err != nil {
-					return nil, nil, nil, err
-				}
-
-				witness = tx.MsgTx().TxIn[0].Witness
-				if len(witness) != 3 {
-					continue
-				}
-
-				originTxId := string(data)
-				orginalTxIds = append(orginalTxIds, originTxId)
-				data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
-			} else {
-				orginalTxIds = append(orginalTxIds, utxos[i].TxID)
-			}
-			if data != nil {
-				res = append(res, data)
-				txIds = append(txIds, txId)
-			}
+			originTxId := string(data)
+			orginalTxIds = append(orginalTxIds, originTxId)
+			data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+		} else {
+			orginalTxIds = append(orginalTxIds, utxos[i].TxID)
+		}
+		if data != nil {
+			res = append(res, data)
+			txIds = append(txIds, txId)
 		}
 	}
 

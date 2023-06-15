@@ -2,7 +2,6 @@ package witnessbtc
 
 import (
 	"bitcoin_nft_v2/utils"
-	"fmt"
 
 	"github.com/btcsuite/btcd/txscript"
 )
@@ -46,7 +45,6 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) ([]byte, bool) {
 	flagData := "m25start-data"
 	flagRef := "m25start-ref"
 	isRef := false
-	fmt.Println(validPosition)
 	if validPosition != -1 {
 		startBodyPos1 := utils.FindStartOfByteArray([]byte(flagData), embeddedData) //+ len([]byte("m25start-data"))
 		startBodyPos2 := utils.FindStartOfByteArray([]byte(flagRef), embeddedData)  //+ len([]byte("m25start-ref"))

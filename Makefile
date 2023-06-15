@@ -17,19 +17,19 @@ sqlc:
 	sqlc generate
 
 run-test-net:
-#                1         2     	   3  					4  							 5 						       6
-#	go run . chain_mode	network       host                 user                         pass 					send_address
-	go run . off_chain testnet3 localhost:18332 DeW+bgKg011pJHZnaBvgv/lMRks= wD9aohGo2f5LwVg7fdj1ntHQcfY= mntb2RxQhyXqXRZV5GE1bDkP6615EPXLHF
-
+#                1         2     	   3  					4  							 5 						       
+#	go run . chain_mode	network       host                 user                         pass 					
+	go run . off_chain testnet3 localhost:18332 DeW+bgKg011pJHZnaBvgv/lMRks= wD9aohGo2f5LwVg7fdj1ntHQcfY= 
+ 
 run-sim-net:
-#                1         2     	   3  		 4  		   5 						 6
-#	go run . chain_mode	network       host      user          pass 					send_address
-	go run . off_chain simnet localhost:18554 youruser SomeDecentp4ssw0rd SfF7WYPTkHnjx1jKweNYAoFGnhZH1Q2291
+#                1         2     	   3  		 4  		   5 						 
+#	go run . chain_mode	network       host      user          pass 					
+	go run . off_chain simnet localhost:18554 youruser SomeDecentp4ssw0rd 
 
 run-on-chain:
-#                1         2     	   3  		 4  		   5 						 6
-#	go run . chain_mode	network       host      user          pass 					send_address
-	go run . on_chain testnet3 localhost:18332 DeW+bgKg011pJHZnaBvgv/lMRks= wD9aohGo2f5LwVg7fdj1ntHQcfY= mntb2RxQhyXqXRZV5GE1bDkP6615EPXLHF
+#                1         2     	   3  		 4  		   5 						 
+#	go run . chain_mode	network       host      user          pass 					
+	go run . on_chain testnet3 localhost:18332 DeW+bgKg011pJHZnaBvgv/lMRks= wD9aohGo2f5LwVg7fdj1ntHQcfY=
 
 .PHONY: postgres createdb dropdb migrate_up migrate_down sqlc run-test-net run-sim-net run-on-chain
 

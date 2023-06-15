@@ -41,7 +41,7 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.Amount, req.IsSendNFT, req.IsRef, req.Urls, req.Passphrase)
+	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))
@@ -80,7 +80,7 @@ func WrapperPredefineEstimatedFee(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	fee, err := sv.CalculateFee(req.Address, req.Amount, req.IsRef, req.Urls, req.Passphrase)
+	fee, err := sv.CalculateFee(req.Address, req.IsRef, req.Urls, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, err)
@@ -250,14 +250,7 @@ func WrapperCreateWallet(ctx *gin.Context) {
 }
 
 func WrapperGetNftFromUtxo(ctx *gin.Context) {
-	var req GetNftFromUtxo
-	err := ctx.ShouldBindQuery(&req)
-	if err != nil {
-		fmt.Println(err)
-		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
-	}
-
-	res, txIds, originTxIds, err := sv.GetNftFromUtxo(req.Address)
+	res, txIds, originTxIds, err := sv.GetAllNfts()
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))

@@ -1,7 +1,6 @@
 package business
 
 import (
-	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/utils"
 	"fmt"
 
@@ -17,8 +16,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amount int64, dataSend []byte, isRef bool) (int64, error) {
-	defaultAddress, err := utils.GetDefaultAddress(sv.client, networkConfig.SenderAddress, networkConfig.ParamsObject)
+func EstimateFeeForCommitTx(sv *Server, amount int64, dataSend []byte, isRef bool) (int64, error) {
+	defaultAddress, err := sv.client.GetAccountAddress("default")
 	if err != nil {
 		return 0, err
 	}
@@ -47,7 +46,7 @@ func EstimateFeeForCommitTx(sv *Server, networkConfig *config.NetworkConfig, amo
 		return 0, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(sv.client, utxos, defaultAddress.EncodeAddress(), float64(amount), "")
+	sendUtxos := utils.GetManyUtxo(sv.client, utxos, float64(amount), "")
 	for _, utxo := range sendUtxos {
 		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)
 		if err != nil {

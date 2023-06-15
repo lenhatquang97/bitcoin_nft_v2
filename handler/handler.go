@@ -23,13 +23,12 @@ const (
 var sv *business.Server
 
 var SimNetConfig = config.NetworkConfig{
-	Host:          "localhost:18554",
-	Endpoint:      "ws",
-	User:          "youruser",
-	Pass:          "SomeDecentp4ssw0rd",
-	Params:        "simnet",
-	ParamsObject:  &chaincfg.SimNetParams,
-	SenderAddress: "SeZdpbs8WBuPHMZETPWajMeXZt1xzCJNAJ",
+	Host:         "localhost:18554",
+	Endpoint:     "ws",
+	User:         "youruser",
+	Pass:         "SomeDecentp4ssw0rd",
+	Params:       "simnet",
+	ParamsObject: &chaincfg.SimNetParams,
 }
 
 var TestNetConfig = config.NetworkConfig{
@@ -39,10 +38,6 @@ var TestNetConfig = config.NetworkConfig{
 	Pass:         "wD9aohGo2f5LwVg7fdj1ntHQcfY=",
 	Params:       "testnet3",
 	ParamsObject: &chaincfg.TestNet3Params,
-	//Note: in testnet, address is not reused so you need to use default address
-	//Another note: Default address has changed everytime you init the server => In UI, you need a mechanism to
-	//choose address anyway.
-	SenderAddress: "mntb2RxQhyXqXRZV5GE1bDkP6615EPXLHF",
 }
 
 func Init(conf config.NetworkConfig, mode string) (*business.Server, error) {
@@ -122,10 +117,6 @@ func ValidateConfig(conf *Config) error {
 		return errors.New("NETWORK_IS_INVALID")
 	}
 
-	if conf.SenderAddress == "" {
-		return errors.New("SEND_ADDRESS_IS_INVALID")
-	}
-
 	return nil
 }
 
@@ -138,12 +129,11 @@ func CreateNetworkConfig(conf *Config) config.NetworkConfig {
 	}
 
 	return config.NetworkConfig{
-		Host:          conf.Host,
-		Endpoint:      "ws",
-		User:          conf.User,
-		Params:        conf.Network,
-		Pass:          conf.Password,
-		ParamsObject:  networkParams,
-		SenderAddress: conf.SenderAddress,
+		Host:         conf.Host,
+		Endpoint:     "ws",
+		User:         conf.User,
+		Params:       conf.Network,
+		Pass:         conf.Password,
+		ParamsObject: networkParams,
 	}
 }

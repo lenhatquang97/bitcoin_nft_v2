@@ -1,7 +1,6 @@
 package business
 
 import (
-	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/utils"
 	"fmt"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef string, amount int64, fee int64) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, sv.Config, fee)
+	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, fee)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -25,9 +24,9 @@ func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef strin
 	return commitTxHash, wif, nil
 }
 
-func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, isRef bool, txIdRef string, networkConfig *config.NetworkConfig, fee int64) (*wire.MsgTx, *btcutil.WIF, error) {
+func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte, isRef bool, txIdRef string, fee int64) (*wire.MsgTx, *btcutil.WIF, error) {
 	//Step 1: Get private key
-	defaultAddress, err := utils.GetDefaultAddress(client, networkConfig.SenderAddress, networkConfig.ParamsObject)
+	defaultAddress, err := client.GetAccountAddress("default")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -43,7 +42,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, err
 	}
 
-	sendUtxos := utils.GetManyUtxo(client, utxos, defaultAddress.EncodeAddress(), float64(amount), txIdRef)
+	sendUtxos := utils.GetManyUtxo(client, utxos, float64(amount), txIdRef)
 	if len(sendUtxos) == 0 {
 		return nil, nil, fmt.Errorf("no utxos")
 	}
@@ -64,12 +63,6 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 		return nil, nil, fmt.Errorf("error building script: %v", err)
 	}
 	outputKey, _, _ := utils.CreateOutputKeyBasedOnScript(wif.PrivKey.PubKey(), hashLockScript)
-
-	address, err := btcutil.NewAddressTaproot(schnorr.SerializePubKey(outputKey), networkConfig.ParamsObject)
-	if err != nil {
-		return nil, nil, err
-	}
-	fmt.Println(address.EncodeAddress())
 
 	outputScriptBuilder := txscript.NewScriptBuilder()
 	outputScriptBuilder.AddOp(txscript.OP_1)
@@ -123,7 +116,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 }
 
 func FakeCommitTxFee(sv *Server, dataSend []byte, amount int64, isRef bool) (int64, error) {
-	fee, err := EstimateFeeForCommitTx(sv, sv.Config, amount, dataSend, isRef)
+	fee, err := EstimateFeeForCommitTx(sv, amount, dataSend, isRef)
 	if err != nil {
 		return 0, err
 	}
