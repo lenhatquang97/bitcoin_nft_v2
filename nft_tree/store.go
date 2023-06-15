@@ -131,7 +131,7 @@ func newKey(data []byte) ([32]byte, error) {
 	return key, nil
 }
 
-func NewStoreWithDB(nodes []sqlc.MssmtNode) (*DefaultStore, error) {
+func NewStoreWithDB(nodes []sqlc.NftNode) (*DefaultStore, error) {
 	branches := make(map[NodeHash]*BranchNode)
 	compactedLeaves := make(map[NodeHash]*CompactedLeafNode)
 	for _, node := range nodes {

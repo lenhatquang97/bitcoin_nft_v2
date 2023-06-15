@@ -4,7 +4,13 @@ package sqlc
 
 import ()
 
-type MssmtNode struct {
+type NftDatum struct {
+	ID   string `json:"id"`
+	Url  string `json:"url"`
+	Memo string `json:"memo"`
+}
+
+type NftNode struct {
 	HashKey  []byte `json:"hash_key"`
 	LHashKey []byte `json:"l_hash_key"`
 	RHashKey []byte `json:"r_hash_key"`
@@ -13,12 +19,6 @@ type MssmtNode struct {
 	Sum      int64  `json:"sum"`
 }
 
-type MssmtRoot struct {
+type NftRoot struct {
 	RootHash []byte `json:"root_hash"`
-}
-
-type NftDatum struct {
-	ID   string `json:"id"`
-	Url  string `json:"url"`
-	Memo string `json:"memo"`
 }

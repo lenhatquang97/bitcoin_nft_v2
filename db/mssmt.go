@@ -57,7 +57,7 @@ type TreeStore interface {
 	DeleteNode(ctx context.Context, n DelNode) (int64, error)
 
 	// FetchRootNode fetches the root node for the specified namespace.
-	FetchRootNode(ctx context.Context) (sqlc.MssmtNode, error)
+	FetchRootNode(ctx context.Context) (sqlc.NftNode, error)
 
 	// UpsertRootNode allows us to update the root node in place for a
 	// given namespace.

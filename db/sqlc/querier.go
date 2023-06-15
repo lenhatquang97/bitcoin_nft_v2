@@ -7,7 +7,7 @@ import (
 type Querier interface {
 	FetchChildren(ctx context.Context, hashKey []byte) ([]FetchChildrenRow, error)
 	FetchChildrenSelfJoin(ctx context.Context, hashKey []byte) ([]FetchChildrenSelfJoinRow, error)
-	FetchRootNode(ctx context.Context) (MssmtNode, error)
+	FetchRootNode(ctx context.Context) (NftNode, error)
 	InsertBranch(ctx context.Context, arg InsertBranchParams) error
 	InsertCompactedLeaf(ctx context.Context, arg InsertCompactedLeafParams) error
 	InsertLeaf(ctx context.Context, arg InsertLeafParams) error

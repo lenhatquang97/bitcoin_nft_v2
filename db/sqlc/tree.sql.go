@@ -8,7 +8,7 @@ import (
 )
 
 const deleteNode = `-- name: DeleteNode :execrows
-DELETE FROM mssmt_nodes WHERE hash_key = $1
+DELETE FROM nft_nodes WHERE hash_key = $1
 `
 
 func (q *Queries) DeleteNode(ctx context.Context, hashKey []byte) (int64, error) {
@@ -25,19 +25,12 @@ WITH RECURSIVE mssmt_branches_cte (
     )
                    AS (
         SELECT r.hash_key, r.l_hash_key, r.r_hash_key, r.key, r.value, r.sum, 0 as depth
-        FROM mssmt_nodes r
+        FROM nft_nodes r
         WHERE r.hash_key = $1
         UNION ALL
         SELECT n.hash_key, n.l_hash_key, n.r_hash_key, n.key, n.value, n.sum, depth+1
-        FROM mssmt_nodes n, mssmt_branches_cte b
+        FROM nft_nodes n, mssmt_branches_cte b
         WHERE n.hash_key=b.l_hash_key OR n.hash_key=b.r_hash_key
-        /*
-        Limit the result set to 3 items. The first is always the root node, while
-        the following 0, 1 or 2 nodes represent children of the root node. These
-        children can either be the next level children, or one next level and one
-        from the level after that. In the future we may use this limit to fetch
-        entire subtrees too.
-        */
     ) SELECT hash_key, l_hash_key, r_hash_key, key, value, sum, depth FROM mssmt_branches_cte WHERE depth < 3
 `
 
@@ -87,11 +80,11 @@ WITH subtree_cte (
                   hash_key, l_hash_key, r_hash_key, key, value, sum, depth
     ) AS (
     SELECT r.hash_key, r.l_hash_key, r.r_hash_key, r.key, r.value, r.sum, 0 as depth
-    FROM mssmt_nodes r
+    FROM nft_nodes r
     WHERE r.hash_key = $1
     UNION ALL
     SELECT c.hash_key, c.l_hash_key, c.r_hash_key, c.key, c.value, c.sum, depth+1
-    FROM mssmt_nodes c
+    FROM nft_nodes c
              INNER JOIN subtree_cte r ON r.l_hash_key=c.hash_key OR r.r_hash_key=c.hash_key
 ) SELECT hash_key, l_hash_key, r_hash_key, key, value, sum, depth from subtree_cte WHERE depth < 3
 `
@@ -139,14 +132,14 @@ func (q *Queries) FetchChildrenSelfJoin(ctx context.Context, hashKey []byte) ([]
 
 const fetchRootNode = `-- name: FetchRootNode :one
 SELECT nodes.hash_key, nodes.l_hash_key, nodes.r_hash_key, nodes.key, nodes.value, nodes.sum
-FROM mssmt_nodes nodes
-         JOIN mssmt_roots roots
+FROM nft_nodes nodes
+         JOIN nft_roots roots
               ON roots.root_hash = nodes.hash_key
 `
 
-func (q *Queries) FetchRootNode(ctx context.Context) (MssmtNode, error) {
+func (q *Queries) FetchRootNode(ctx context.Context) (NftNode, error) {
 	row := q.db.QueryRowContext(ctx, fetchRootNode)
-	var i MssmtNode
+	var i NftNode
 	err := row.Scan(
 		&i.HashKey,
 		&i.LHashKey,
@@ -159,28 +152,18 @@ func (q *Queries) FetchRootNode(ctx context.Context) (MssmtNode, error) {
 }
 
 const getAllNodeByNameSpace = `-- name: GetAllNodeByNameSpace :many
-
-SELECT hash_key, l_hash_key, r_hash_key, key, value, sum from mssmt_nodes
+SELECT hash_key, l_hash_key, r_hash_key, key, value, sum from nft_nodes
 `
 
-// INSERT INTO mssmt_roots (
-//
-//	root_hash
-//
-// ) VALUES (
-//
-//	         $1, $2
-//	     ) ON CONFLICT (namespace)
-//	DO UPDATE SET root_hash = EXCLUDED.root_hash;
-func (q *Queries) GetAllNodeByNameSpace(ctx context.Context) ([]MssmtNode, error) {
+func (q *Queries) GetAllNodeByNameSpace(ctx context.Context) ([]NftNode, error) {
 	rows, err := q.db.QueryContext(ctx, getAllNodeByNameSpace)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []MssmtNode
+	var items []NftNode
 	for rows.Next() {
-		var i MssmtNode
+		var i NftNode
 		if err := rows.Scan(
 			&i.HashKey,
 			&i.LHashKey,
@@ -203,7 +186,7 @@ func (q *Queries) GetAllNodeByNameSpace(ctx context.Context) ([]MssmtNode, error
 }
 
 const insertBranch = `-- name: InsertBranch :exec
-INSERT INTO mssmt_nodes (
+INSERT INTO nft_nodes (
     hash_key, l_hash_key, r_hash_key, key, value, sum
 ) VALUES ($1, $2, $3, NULL, NULL, $4)
 `
@@ -226,7 +209,7 @@ func (q *Queries) InsertBranch(ctx context.Context, arg InsertBranchParams) erro
 }
 
 const insertCompactedLeaf = `-- name: InsertCompactedLeaf :exec
-INSERT INTO mssmt_nodes (
+INSERT INTO nft_nodes (
     hash_key, l_hash_key, r_hash_key, key, value, sum
 ) VALUES ($1, NULL, NULL, $2, $3, $4)
 `
@@ -249,7 +232,7 @@ func (q *Queries) InsertCompactedLeaf(ctx context.Context, arg InsertCompactedLe
 }
 
 const insertLeaf = `-- name: InsertLeaf :exec
-INSERT INTO mssmt_nodes (
+INSERT INTO nft_nodes (
     hash_key, l_hash_key, r_hash_key, key, value, sum
 ) VALUES ($1, NULL, NULL, NULL, $2, $3)
 `
@@ -266,7 +249,7 @@ func (q *Queries) InsertLeaf(ctx context.Context, arg InsertLeafParams) error {
 }
 
 const upsertRootNode = `-- name: UpsertRootNode :exec
-INSERT INTO mssmt_roots (
+INSERT INTO nft_roots (
     root_hash
 ) VALUES (
              $1
