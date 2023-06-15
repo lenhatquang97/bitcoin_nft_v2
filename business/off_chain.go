@@ -87,6 +87,14 @@ func (sv *Server) CalculateFee(toAddress string, isRef bool, data interface{}, p
 		return 0, err
 	}
 
+	if toAddress == "default" {
+		defaultAddress, err := sv.client.GetAccountAddress("default")
+		if err != nil {
+			return 0, err
+		}
+		toAddress = defaultAddress.EncodeAddress()
+	}
+
 	//Step 3: Calculate fee (commit and revealTxFee)
 	estimatedCommitTxFee, err := FakeCommitTxFee(sv, dataSend, SampleSatoshi, isRef)
 	if err != nil {

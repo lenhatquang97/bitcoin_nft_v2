@@ -10,18 +10,21 @@ import (
 )
 
 type MyUtxo struct {
-	TxID   string
-	Vout   uint32
-	Amount float64
+	TxID    string
+	Vout    uint32
+	Amount  float64
+	Address string
 }
 
 func GetManyUtxo(client *rpcclient.Client, utxos []btcjson.ListUnspentResult, amount float64, specialTxId string) []*MyUtxo {
 	var myUtxos []*MyUtxo
 	for i := 0; i < len(utxos); i++ {
+
 		myUtxos = append(myUtxos, &MyUtxo{
-			TxID:   utxos[i].TxID,
-			Vout:   utxos[i].Vout,
-			Amount: utxos[i].Amount,
+			TxID:    utxos[i].TxID,
+			Vout:    utxos[i].Vout,
+			Amount:  utxos[i].Amount,
+			Address: utxos[i].Address,
 		})
 	}
 	var res []*MyUtxo

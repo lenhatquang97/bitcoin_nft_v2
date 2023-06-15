@@ -7,13 +7,23 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-func SignTx(wif *btcutil.WIF, pkScript []byte, redeemTx *wire.MsgTx) (*wire.MsgTx, error) {
+func SignTx(wif *btcutil.WIF, sendUtxos []*MyUtxo, redeemTx *wire.MsgTx) (*wire.MsgTx, error) {
 	for i := range redeemTx.TxIn {
+		addressObj, err := btcutil.DecodeAddress(sendUtxos[i].Address, &chaincfg.TestNet3Params)
+		if err != nil {
+			return nil, err
+		}
+		pkScript, err := txscript.PayToAddrScript(addressObj)
+		if err != nil {
+			return nil, err
+		}
+
 		signature, err := txscript.SignatureScript(redeemTx, i, pkScript, txscript.SigHashAll, wif.PrivKey, true)
 		if err != nil {
 			return nil, err
