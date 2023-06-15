@@ -106,11 +106,10 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	}
 
 	// now sign the transaction
-	finalRawTx, err := utils.SignTx(wif, sendUtxos, redeemTx)
+	finalRawTx, _, err := client.SignRawTransaction(redeemTx)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	return finalRawTx, wif, nil
 }
 
