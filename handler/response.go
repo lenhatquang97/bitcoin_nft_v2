@@ -24,19 +24,16 @@ type ImportProofResponse struct {
 }
 
 type ExportProofResponse struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	Data    struct {
-		ID   string `json:"id"`
-		Url  string `json:"url"`
-		Memo string `json:"memo"`
-	} `json:"data"`
+	Code    int32   `json:"code"`
+	Message string  `json:"message"`
+	Data    NftData `json:"data"`
 }
 
 type NftData struct {
-	ID   string `json:"id"`
-	Url  string `json:"url"`
-	Memo string `json:"memo"`
+	ID     string `json:"id"`
+	Url    string `json:"url"`
+	Memo   string `json:"memo"`
+	Binary string `json:"binary"`
 }
 
 type ViewNftDataResponse struct {

@@ -185,9 +185,10 @@ func WrapperViewNftData(ctx *gin.Context) {
 	var items []NftData
 	for _, item := range nftData {
 		items = append(items, NftData{
-			ID:   item.ID,
-			Url:  item.Url,
-			Memo: item.Memo,
+			ID:     item.ID,
+			Url:    item.Url,
+			Memo:   item.Memo,
+			Binary: item.Binary,
 		})
 	}
 

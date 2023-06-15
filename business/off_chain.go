@@ -14,6 +14,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -299,10 +301,29 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 	var res []*NftData
 
 	for _, item := range nftDatas {
+		response, err := http.Get(item.Url)
+		if err != nil {
+			continue
+		}
+
+		// Check if the response was successful
+		if response.StatusCode != http.StatusOK {
+			fmt.Printf("Download failed with status code: %v\n", response.StatusCode)
+			continue
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			continue
+		}
+
+		hexString := hex.EncodeToString(data)
+
 		res = append(res, &NftData{
-			ID:   item.ID,
-			Url:  item.Url,
-			Memo: item.Memo,
+			ID:     item.ID,
+			Url:    item.Url,
+			Memo:   item.Memo,
+			Binary: hexString,
 		})
 	}
 
