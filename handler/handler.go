@@ -63,6 +63,7 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	router.GET("/on-chain-nft", WrapperGetNftFromUtxo)
 	router.GET("/tx/size", WrapperGetTxSize)
 	router.GET("/render", WrapperRenderTree)
+	router.GET("/ipfs-link", WrapperIpfsLink)
 }
 
 func Run(config *Config) {

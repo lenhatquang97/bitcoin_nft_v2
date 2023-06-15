@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bitcoin_nft_v2/ipfs"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -337,4 +338,19 @@ func WrapperRenderTree(ctx *gin.Context) {
 		Code:    200,
 		Message: "OK",
 	})
+}
+
+func WrapperIpfsLink(ctx *gin.Context) {
+	filePath := ctx.Query("filePath")
+	if len(filePath) == 0 {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, "filePath is required"))
+		return
+	}
+	fmt.Println(filePath)
+	fileLink, err := ipfs.GetIpfsLink(filePath)
+	if err != nil {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+		return
+	}
+	ctx.JSON(200, fileLink)
 }
