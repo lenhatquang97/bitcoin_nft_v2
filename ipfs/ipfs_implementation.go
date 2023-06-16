@@ -8,9 +8,17 @@ import (
 	"time"
 
 	shell "github.com/ipfs/go-ipfs-api"
+	"github.com/joho/godotenv"
 )
 
-const YourPublicKey = "k51qzi5uqu5dil4952pc6hw4063hgsxyx8lae8txbpxkf2iajvj43u71gwudyu"
+func EnvIpfsPublicKey() string {
+	err := godotenv.Load()
+	if err != nil {
+		return ""
+	}
+
+	return os.Getenv("IpfsPublicKey")
+}
 
 func ReadFileForIpfs(filePath string) ([]byte, error) {
 	file, err := os.Open(filePath)
@@ -65,11 +73,11 @@ func GetIpfsLink(filePath string) (string, error) {
 	//Add to IPNS
 	var lifetime time.Duration = 10 * time.Hour
 	var ttl time.Duration = 1 * time.Microsecond
-	_, err = sh.PublishWithDetails(cid, YourPublicKey, lifetime, ttl, true)
+	_, err = sh.PublishWithDetails(cid, EnvIpfsPublicKey(), lifetime, ttl, true)
 	if err != nil {
 		return "", err
 	}
-	_, err = sh.Resolve(YourPublicKey)
+	_, err = sh.Resolve(EnvIpfsPublicKey())
 	if err != nil {
 		return "", err
 	}
