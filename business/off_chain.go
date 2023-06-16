@@ -5,6 +5,7 @@ import (
 	"bitcoin_nft_v2/config"
 	"bitcoin_nft_v2/db"
 	"bitcoin_nft_v2/db/sqlc"
+	"bitcoin_nft_v2/ipfs"
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"bitcoin_nft_v2/witnessbtc"
@@ -301,20 +302,28 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 	var res []*NftData
 
 	for _, item := range nftDatas {
-		response, err := http.Get(item.Url)
-		if err != nil {
-			continue
-		}
+		var data []byte
+		if strings.Contains(item.Url, "ipfs.io/ipfs") {
+			data, err = ipfs.DownloadOnIpfs(item.Url)
+			if err != nil {
+				continue
+			}
+		} else {
+			response, err := http.Get(item.Url)
+			if err != nil {
+				continue
+			}
 
-		// Check if the response was successful
-		if response.StatusCode != http.StatusOK {
-			fmt.Printf("Download failed with status code: %v\n", response.StatusCode)
-			continue
-		}
+			// Check if the response was successful
+			if response.StatusCode != http.StatusOK {
+				fmt.Printf("Download failed with status code: %v\n", response.StatusCode)
+				continue
+			}
 
-		data, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			continue
+			data, err = ioutil.ReadAll(response.Body)
+			if err != nil {
+				continue
+			}
 		}
 
 		hexString := hex.EncodeToString(data)
