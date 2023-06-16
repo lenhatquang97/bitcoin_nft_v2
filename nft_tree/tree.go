@@ -359,6 +359,8 @@ func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftDa
 
 			value := data[key]
 			currentTree.Data = &value
+
+			currentTree = virtualTree
 		}
 
 		return nil
@@ -368,6 +370,13 @@ func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftDa
 		return nil, err
 	}
 
+	root, err := t.Root(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	virtualTree.Hash = root.nodeHash
+	virtualTree.Sum = root.sum
 	// get all data and compute key
 
 	// mapping data into map

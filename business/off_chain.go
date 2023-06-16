@@ -714,35 +714,46 @@ func printTree(root *nft_tree.VirtualTree, level int) {
 
 	height := getHeight(root)
 	maxWidth := getMaxWidth(root, height)
-	printTreeHelper(root, "", maxWidth, height, level)
+	printTreeHelper(root, "", maxWidth, height, height, level, false)
 }
 
-func printTreeHelper(root *nft_tree.VirtualTree, prefix string, maxWidth, currLevel, targetLevel int) {
+func printTreeHelper(root *nft_tree.VirtualTree, prefix string, maxWidth, currLevel, height, targetLevel int, isLeft bool) {
 	if root == nil {
 		return
 	}
 
-	if currLevel == targetLevel {
-		currStr := "———"
+	if currLevel == height-2 {
+		fmt.Println("...")
+	}
+	if currLevel == targetLevel || currLevel >= height-2 {
+		currStr := "—"
 		prevStr := prefix
 
 		fmt.Print(prefix)
+		branch := "R"
+		if isLeft {
+			branch = "L"
+		}
 		if root.Data == nil {
-			fmt.Printf("%s %v\n", currStr, root.Hash)
+			fmt.Printf("%s%s— %v\n", currStr, branch, root.Hash)
 		} else {
-			fmt.Printf("%s %v\n", currStr, root.Data)
+			fmt.Printf("%s%s— %v\n", currStr, branch, root.Data)
 		}
 
 		newPrefix := prefix
 		if prevStr != "" {
-			newPrefix = strings.Replace(prevStr, "———", "   |", 1)
+			newPrefix = strings.Replace(prevStr, "—", "   |", 1)
 		}
 
-		printTreeHelper(root.Left, newPrefix+"   |", maxWidth, currLevel-1, targetLevel-1)
-		printTreeHelper(root.Right, prevStr, maxWidth, currLevel-1, targetLevel-1)
+		plus := 0
+		if currLevel == targetLevel {
+			plus = -1
+		}
+		printTreeHelper(root.Left, newPrefix+"   |", maxWidth, currLevel-1, height, targetLevel+plus, true)
+		printTreeHelper(root.Right, prevStr+"   |", maxWidth, currLevel-1, height, targetLevel+plus, false)
 	} else {
-		printTreeHelper(root.Left, prefix, maxWidth, currLevel-1, targetLevel)
-		printTreeHelper(root.Right, prefix, maxWidth, currLevel-1, targetLevel)
+		printTreeHelper(root.Left, prefix, maxWidth, currLevel-1, height, targetLevel, true)
+		printTreeHelper(root.Right, prefix, maxWidth, currLevel-1, height, targetLevel, false)
 	}
 }
 
@@ -758,4 +769,20 @@ func getHeight(root *nft_tree.VirtualTree) int {
 		return leftHeight + 1
 	}
 	return rightHeight + 1
+}
+
+func CheckData(v *nft_tree.VirtualTree) int {
+	if v == nil {
+		return 0
+	}
+
+	a := CheckData(v.Left)
+	b := CheckData(v.Right)
+
+	res := 0
+	if v.Data != nil {
+		res = 1
+	}
+
+	return res + a + b
 }
