@@ -353,5 +353,11 @@ func WrapperIpfsLink(ctx *gin.Context) {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 		return
 	}
-	ctx.JSON(200, fileLink)
+
+	type getIPFSUrlRes struct {
+		Url string `json:"url"`
+	}
+	ctx.JSON(200, &getIPFSUrlRes{
+		Url: fileLink,
+	})
 }
