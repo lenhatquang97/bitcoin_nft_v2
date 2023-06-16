@@ -727,7 +727,11 @@ func printTreeHelper(root *nft_tree.VirtualTree, prefix string, maxWidth, currLe
 		prevStr := prefix
 
 		fmt.Print(prefix)
-		fmt.Printf("%s %v\n", currStr, root.Data)
+		if root.Data == nil {
+			fmt.Printf("%s %v\n", currStr, root.Hash)
+		} else {
+			fmt.Printf("%s %v\n", currStr, root.Data)
+		}
 
 		newPrefix := prefix
 		if prevStr != "" {
