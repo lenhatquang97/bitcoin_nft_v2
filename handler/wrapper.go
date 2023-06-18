@@ -46,7 +46,7 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, business.NftData{
+	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.TxID, business.NftData{
 		ID:   req.Data.ID,
 		Url:  req.Data.Url,
 		Memo: req.Data.Memo,

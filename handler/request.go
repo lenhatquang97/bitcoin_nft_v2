@@ -8,6 +8,7 @@ type SendRequest struct {
 	IsRef      bool     `json:"isRef"`
 	IsMint     bool     `json:"isMint"`
 	Urls       []string `json:"urls"`
+	TxID       string   `json:"txId"`
 	Data       *NftData `json:"data"`
 }
 

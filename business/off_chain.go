@@ -134,7 +134,7 @@ func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data i
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interface{}, nft NftData, passphrase string) (string, string, int64, error) {
+func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interface{}, specialTxId string, nft NftData, passphrase string) (string, string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -188,6 +188,8 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 				if !isOwnerNft {
 					return "", "", 0, errors.New("You must have this nft on utxo")
 				}
+
+				txIdRef = specialTxId
 			} else {
 				isMintOffChain = true
 				// check nft can spend
