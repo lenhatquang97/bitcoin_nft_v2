@@ -14,6 +14,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -70,13 +71,27 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	}, nil
 }
 
-func (sv *Server) CalculateFee(toAddress string, isRef bool, data interface{}, passphrase string) (int64, error) {
+func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data interface{}, passphrase string) (int64, error) {
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
-		dataSend, err = sv.GetDataSendOffChain(data, isRef)
+		if !isMint {
+			dataSend, err = sv.GetDataSendOffChain(data, isRef)
+		} else {
+			var dataStr []byte
+			var customData string
+			dataStr, err = json.Marshal(data)
+			if err != nil {
+				return 0, err
+			}
+			customData, err = RawDataEncode(string(dataStr))
+			if err != nil {
+				return 0, err
+			}
+
+			dataSend = []byte(customData)
+		}
 		if err != nil {
-			fmt.Println("Compute root hash for receiver error")
 			fmt.Println(err)
 			return 0, err
 		}

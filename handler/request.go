@@ -6,6 +6,7 @@ type SendRequest struct {
 	Passphrase string   `json:"passphrase"`
 	IsSendNFT  bool     `json:"isSendNft"`
 	IsRef      bool     `json:"isRef"`
+	IsMint     bool     `json:"isMint"`
 	Urls       []string `json:"urls"`
 	Data       *NftData `json:"data"`
 }

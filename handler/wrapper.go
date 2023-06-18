@@ -89,7 +89,13 @@ func WrapperPredefineEstimatedFee(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	fee, err := sv.CalculateFee(req.Address, req.IsRef, req.Urls, req.Passphrase)
+	var data interface{}
+	if !req.IsMint {
+		data = req.Urls
+	} else {
+		data = req.Data
+	}
+	fee, err := sv.CalculateFee(req.Address, req.IsRef, req.IsMint, data, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, err)
