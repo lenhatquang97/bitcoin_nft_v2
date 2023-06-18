@@ -35,9 +35,6 @@ func WrapperSend(ctx *gin.Context) {
 		fmt.Println(err)
 		ctx.JSON(400, WrapperErrorMsgResponse(400, "Nft Url must not be empty"))
 		return
-	} else if req.Data == nil {
-		ctx.JSON(400, WrapperErrorMsgResponse(400, "Nft data must not be empty"))
-		return
 	}
 
 	if len(req.Passphrase) == 0 {
@@ -45,12 +42,15 @@ func WrapperSend(ctx *gin.Context) {
 		return
 	}
 
+	var data business.NftData
+	if req.Data != nil {
+		data.ID = req.Data.ID
+		data.Url = req.Data.Url
+		data.Memo = req.Data.Memo
+	}
+
 	// check for mode on chain
-	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.TxID, business.NftData{
-		ID:   req.Data.ID,
-		Url:  req.Data.Url,
-		Memo: req.Data.Memo,
-	}, req.Passphrase)
+	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.TxID, data, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))
@@ -202,6 +202,7 @@ func WrapperViewNftData(ctx *gin.Context) {
 			ID:     item.ID,
 			Url:    item.Url,
 			Memo:   item.Memo,
+			TxID:   item.TxID,
 			Binary: item.Binary,
 		})
 	}

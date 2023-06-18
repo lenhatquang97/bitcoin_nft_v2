@@ -33,6 +33,7 @@ type NftData struct {
 	ID     string `json:"id"`
 	Url    string `json:"url"`
 	Memo   string `json:"memo"`
+	TxID   string `json:"txId"`
 	Binary string `json:"binary"`
 }
 
