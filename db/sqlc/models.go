@@ -8,6 +8,7 @@ type NftDatum struct {
 	ID   string `json:"id"`
 	Url  string `json:"url"`
 	Memo string `json:"memo"`
+	Txid string `json:"txid"`
 }
 
 type NftNode struct {

@@ -17,7 +17,7 @@ func (q *Queries) DeleteNftDataByUrl(ctx context.Context, url string) error {
 }
 
 const getAllNft = `-- name: GetAllNft :many
-SELECT id, url, memo
+SELECT id, url, memo, txid
 FROM nft_data
 `
 
@@ -30,7 +30,12 @@ func (q *Queries) GetAllNft(ctx context.Context) ([]NftDatum, error) {
 	var items []NftDatum
 	for rows.Next() {
 		var i NftDatum
-		if err := rows.Scan(&i.ID, &i.Url, &i.Memo); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Url,
+			&i.Memo,
+			&i.Txid,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -45,7 +50,7 @@ func (q *Queries) GetAllNft(ctx context.Context) ([]NftDatum, error) {
 }
 
 const getListNft = `-- name: GetListNft :many
-SELECT id, url, memo
+SELECT id, url, memo, txid
 FROM nft_data
 LIMIT $1 OFFSET $2
 `
@@ -64,7 +69,12 @@ func (q *Queries) GetListNft(ctx context.Context, arg GetListNftParams) ([]NftDa
 	var items []NftDatum
 	for rows.Next() {
 		var i NftDatum
-		if err := rows.Scan(&i.ID, &i.Url, &i.Memo); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Url,
+			&i.Memo,
+			&i.Txid,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -79,7 +89,7 @@ func (q *Queries) GetListNft(ctx context.Context, arg GetListNftParams) ([]NftDa
 }
 
 const getNFtDataByUrl = `-- name: GetNFtDataByUrl :one
-SELECT id, url, memo
+SELECT id, url, memo, txid
 FROM nft_data
 WHERE url = $1
 LIMIT 1
@@ -88,12 +98,17 @@ LIMIT 1
 func (q *Queries) GetNFtDataByUrl(ctx context.Context, url string) (NftDatum, error) {
 	row := q.db.QueryRowContext(ctx, getNFtDataByUrl, url)
 	var i NftDatum
-	err := row.Scan(&i.ID, &i.Url, &i.Memo)
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Memo,
+		&i.Txid,
+	)
 	return i, err
 }
 
 const getNftDataByID = `-- name: GetNftDataByID :one
-SELECT id, url, memo
+SELECT id, url, memo, txid
 FROM nft_data
 WHERE id=$1
 LIMIT 1
@@ -102,7 +117,12 @@ LIMIT 1
 func (q *Queries) GetNftDataByID(ctx context.Context, id string) (NftDatum, error) {
 	row := q.db.QueryRowContext(ctx, getNftDataByID, id)
 	var i NftDatum
-	err := row.Scan(&i.ID, &i.Url, &i.Memo)
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Memo,
+		&i.Txid,
+	)
 	return i, err
 }
 
@@ -110,9 +130,10 @@ const insertNftData = `-- name: InsertNftData :exec
 INSERT INTO nft_data (
     id,
     url,
-    memo
+    memo,
+    txId
 ) VALUES (
-    $1, $2, $3
+    $1, $2, $3, $4
          )
 `
 
@@ -120,9 +141,15 @@ type InsertNftDataParams struct {
 	ID   string `json:"id"`
 	Url  string `json:"url"`
 	Memo string `json:"memo"`
+	Txid string `json:"txid"`
 }
 
 func (q *Queries) InsertNftData(ctx context.Context, arg InsertNftDataParams) error {
-	_, err := q.db.ExecContext(ctx, insertNftData, arg.ID, arg.Url, arg.Memo)
+	_, err := q.db.ExecContext(ctx, insertNftData,
+		arg.ID,
+		arg.Url,
+		arg.Memo,
+		arg.Txid,
+	)
 	return err
 }

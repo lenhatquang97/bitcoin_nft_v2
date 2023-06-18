@@ -165,7 +165,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 					return "", "", 0, err
 				}
 
-				isOwnerNft, err2 := sv.CheckOwnerNft(dataSend)
+				isOwnerNft, _, err2 := sv.CheckOwnerNft(dataSend)
 				if err2 != nil {
 					return "", "", 0, err2
 				}
@@ -178,6 +178,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 				// check nft can spend
 				// Step1: Create root hash
 				// Step2: Get List utxo check root hash
+				txIdRef = data.([]string)[0]
 				nftData = append(nftData, &nft)
 				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
 			}
@@ -354,6 +355,7 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 			ID:     item.ID,
 			Url:    item.Url,
 			Memo:   item.Memo,
+			TxID:   item.Txid,
 			Binary: hexString,
 		})
 	}
@@ -451,7 +453,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 	if err != nil {
 		return err
 	}
-	isOwnerNft, err2 := sv.CheckOwnerNft(dataSend)
+	isOwnerNft, txId, err2 := sv.CheckOwnerNft(dataSend)
 	if err2 != nil {
 		return err2
 	}
@@ -505,6 +507,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 		ID:   id,
 		Url:  url,
 		Memo: memo,
+		Txid: txId,
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -745,21 +748,21 @@ func (sv *Server) RenderTree() error {
 	return nil
 }
 
-func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, error) {
+func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, string, error) {
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
 	for i := 0; i < len(utxos); i++ {
 		//100_000_000 is because it's testnet
 		hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 		tx, err := sv.client.GetRawTransaction(hashId)
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 
 		witness := tx.MsgTx().TxIn[0].Witness
@@ -775,11 +778,11 @@ func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, error) {
 		fmt.Println("Hash str: ", string(data))
 
 		if bytes.Equal(data, hashStr) {
-			return true, nil
+			return true, "", nil
 		}
 	}
 
-	return false, errors.New("You must owner this nft")
+	return false, "", errors.New("You must owner this nft")
 }
 
 func getMaxWidth(root *nft_tree.VirtualTree, level int) int {

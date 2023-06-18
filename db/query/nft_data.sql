@@ -2,9 +2,10 @@
 INSERT INTO nft_data (
     id,
     url,
-    memo
+    memo,
+    txId
 ) VALUES (
-    $1, $2, $3
+    $1, $2, $3, $4
          );
 
 -- name: GetListNft :many
