@@ -193,7 +193,6 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 				// check nft can spend
 				// Step1: Create root hash
 				// Step2: Get List utxo check root hash
-				txIdRef = data.([]string)[0]
 				nftData = append(nftData, &nft)
 				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
 			}
