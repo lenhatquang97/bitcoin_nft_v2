@@ -16,7 +16,7 @@ migrate_down:
 sqlc:
 	sqlc generate
 
-run-test-net:
+run-off-chain:
 #                1         2     	   3  					4  							 5 						       
 #	go run . chain_mode	network       host                 user                         pass 					
 	go run . off_chain testnet3 localhost:18332 DeW+bgKg011pJHZnaBvgv/lMRks= wD9aohGo2f5LwVg7fdj1ntHQcfY= 
