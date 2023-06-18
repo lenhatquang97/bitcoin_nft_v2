@@ -2,12 +2,13 @@ package witnessbtc
 
 import (
 	"bitcoin_nft_v2/utils"
-
 	"github.com/btcsuite/btcd/txscript"
 )
 
 const (
 	CONTENT_TAG = "m25"
+	ON_CHAIN    = "on_chain"
+	OFF_CHAIN   = "off_chain"
 )
 
 func GetPaddingInAddData(data []byte) int {
@@ -31,7 +32,7 @@ func GetPaddingInAddData(data []byte) int {
 	}
 }
 
-func DeserializeWitnessDataIntoInscription(embeddedData []byte) ([]byte, bool) {
+func DeserializeWitnessDataIntoInscription(embeddedData []byte, mode string) ([]byte, bool) {
 	fixedBytes := []byte{txscript.OP_CHECKSIG, txscript.OP_0, txscript.OP_IF}
 	validPosition := -1
 	for i := range embeddedData {
@@ -44,22 +45,36 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte) ([]byte, bool) {
 	flagEnd := "m25end"
 	flagData := "m25start-data"
 	flagRef := "m25start-ref"
+	flagStartOffChain := "m25off-chain-start"
+	flagEndOffChain := "m25off-chain-end"
 	isRef := false
 	if validPosition != -1 {
-		startBodyPos1 := utils.FindStartOfByteArray([]byte(flagData), embeddedData) //+ len([]byte("m25start-data"))
-		startBodyPos2 := utils.FindStartOfByteArray([]byte(flagRef), embeddedData)  //+ len([]byte("m25start-ref"))
-		startBodyPos := startBodyPos1
-		if startBodyPos1 == -1 {
-			startBodyPos = startBodyPos2 + len([]byte(flagRef))
-			flagEnd += "-ref"
-			isRef = true
+		var endBodyPos, startBodyPos int
+		if mode == ON_CHAIN {
+			startBodyPos1 := utils.FindStartOfByteArray([]byte(flagData), embeddedData) //+ len([]byte("m25start-data"))
+			startBodyPos2 := utils.FindStartOfByteArray([]byte(flagRef), embeddedData)  //+ len([]byte("m25start-ref"))
+			startBodyPos = startBodyPos1
+			if startBodyPos1 == -1 {
+				startBodyPos = startBodyPos2 + len([]byte(flagRef))
+				flagEnd += "-ref"
+				isRef = true
+			} else {
+				startBodyPos += len([]byte(flagData))
+				flagEnd += "-data"
+			}
+			endBodyPos = startBodyPos + 500
+			if startBodyPos == -1 {
+				return nil, false
+			}
 		} else {
-			startBodyPos += len([]byte(flagData))
-			flagEnd += "-data"
-		}
-		endBodyPos := startBodyPos + 500
-		if startBodyPos == -1 {
-			return nil, false
+			startBodyPos1 := utils.FindStartOfByteArray([]byte(flagStartOffChain), embeddedData)
+			if startBodyPos1 == -1 {
+				return nil, false
+			}
+
+			startBodyPos = startBodyPos1
+			endBodyPos = startBodyPos + 500
+			flagEnd = flagEndOffChain
 		}
 
 		if endBodyPos < len(embeddedData) {

@@ -9,6 +9,7 @@ import (
 	"bitcoin_nft_v2/nft_tree"
 	"bitcoin_nft_v2/utils"
 	"bitcoin_nft_v2/witnessbtc"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"database/sql"
@@ -132,32 +133,53 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 	txIdRef := ""
 	var keys [][32]byte
 	var leafHash []nft_tree.NodeHash
+	isMintOffChain := false
 	if isSendNft {
 		if sv.mode == OFF_CHAIN {
 			var nftData []*NftData
-			fmt.Println(data)
-			item := data.([]string)[0]
-			fmt.Println("Item test", item)
-			for _, url := range data.([]string) {
-				item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
+			if toAddress != "default" {
+				listItem := data.([]string)
+				if len(listItem) > 1 {
+					return "", "", 0, errors.New("Can send only one nft")
+				}
+
+				for _, url := range listItem {
+					item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
+					if err != nil {
+						print("Get Nft Data Failed")
+						fmt.Println(err)
+						return "", "", 0, err
+					}
+
+					nftData = append(nftData, &NftData{
+						ID:   item.ID,
+						Url:  item.Url,
+						Memo: item.Memo,
+					})
+				}
+
+				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
 				if err != nil {
-					print("Get Nft Data Failed")
+					fmt.Println("Compute root hash for receiver error")
 					fmt.Println(err)
 					return "", "", 0, err
 				}
+			} else {
+				isMintOffChain = true
+				// check nft can spend
+				// Step1: Create root hash
+				// Step2: Get List utxo check root hash
+				nftData1 := data.(*NftData)
+				nftData = append(nftData, nftData1)
+				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
+				isOwnerNft, err2 := sv.CheckOwnerNft(dataSend)
+				if err2 != nil {
+					return "", "", 0, err2
+				}
 
-				nftData = append(nftData, &NftData{
-					ID:   item.ID,
-					Url:  item.Url,
-					Memo: item.Memo,
-				})
-			}
-
-			dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
-			if err != nil {
-				fmt.Println("Compute root hash for receiver error")
-				fmt.Println(err)
-				return "", "", 0, err
+				if !isOwnerNft {
+					return "", "", 0, errors.New("You must have this nft on utxo")
+				}
 			}
 		} else {
 			if isRef {
@@ -234,7 +256,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 		return "", "", 0, err
 	}
 
-	if sv.mode == OFF_CHAIN {
+	if sv.mode == OFF_CHAIN && !isMintOffChain {
 		for i, key := range keys {
 
 			txCreator := func(tx *sql.Tx) db.TreeStore {
@@ -419,6 +441,25 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 		return errors.New("SERVER_MODE_IS_ON_CHAIN")
 	}
 
+	var nftData []*NftData
+	nftData = append(nftData, &NftData{
+		ID:   id,
+		Url:  url,
+		Memo: memo,
+	})
+	dataSend, _, _, err := NewRootHashForReceiver(nftData)
+	if err != nil {
+		return err
+	}
+	isOwnerNft, err2 := sv.CheckOwnerNft(dataSend)
+	if err2 != nil {
+		return err2
+	}
+
+	if !isOwnerNft {
+		return errors.New("You must have this nft on utxo")
+	}
+
 	// import nft data and merge tree
 	dataByte, key := ComputeNftDataByte(&NftData{
 		ID:   id,
@@ -459,6 +500,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 	}
 
 	rootHash := utils.GetNftRoot(updatedRoot)
+
 	err = sv.DB.InsertNftData(context.Background(), sqlc.InsertNftDataParams{
 		ID:   id,
 		Url:  url,
@@ -618,7 +660,7 @@ func (sv *Server) GetAllNfts() ([][]byte, []string, []string, error) {
 		}
 
 		txId := utxos[i].TxID
-		data, isRef := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+		data, isRef := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1], ON_CHAIN)
 		if isRef {
 			hashId, err = chainhash.NewHashFromStr(string(data))
 			if err != nil {
@@ -636,7 +678,7 @@ func (sv *Server) GetAllNfts() ([][]byte, []string, []string, error) {
 
 			originTxId := string(data)
 			orginalTxIds = append(orginalTxIds, originTxId)
-			data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1])
+			data, _ = witnessbtc.DeserializeWitnessDataIntoInscription(witness[1], ON_CHAIN)
 		} else {
 			orginalTxIds = append(orginalTxIds, utxos[i].TxID)
 		}
@@ -699,6 +741,41 @@ func (sv *Server) RenderTree() error {
 
 	printTree(renderedTree, 3)
 	return nil
+}
+
+func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, error) {
+	utxos, err := sv.client.ListUnspent()
+	if err != nil {
+		return false, err
+	}
+
+	for i := 0; i < len(utxos); i++ {
+		//100_000_000 is because it's testnet
+		hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
+		if err != nil {
+			return false, err
+		}
+		tx, err := sv.client.GetRawTransaction(hashId)
+		if err != nil {
+			return false, err
+		}
+
+		witness := tx.MsgTx().TxIn[0].Witness
+		if len(witness) != 3 {
+			continue
+		}
+
+		data, _ := witnessbtc.DeserializeWitnessDataIntoInscription(witness[1], OFF_CHAIN)
+		if data == nil {
+			continue
+		}
+
+		if bytes.Equal(data, hashStr) {
+			return true, nil
+		}
+	}
+
+	return false, errors.New("You must owner this nft")
 }
 
 func getMaxWidth(root *nft_tree.VirtualTree, level int) int {
