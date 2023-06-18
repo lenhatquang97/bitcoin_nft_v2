@@ -32,7 +32,7 @@ func ReadFile(filePath string) ([]byte, string, error) {
 	}
 
 	fileSize := fileInfo.Size()
-	if fileSize >= 3*1024*1024 {
+	if fileSize >= 2.5*1024*1024 {
 		return nil, "", fmt.Errorf("too much %d bytes for embedding NFT data", fileSize)
 	}
 
