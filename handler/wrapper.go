@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bitcoin_nft_v2/business"
 	"bitcoin_nft_v2/ipfs"
 	"encoding/hex"
 	"fmt"
@@ -30,9 +31,12 @@ func WrapperSend(ctx *gin.Context) {
 		return
 	}
 
-	if len(req.Urls) == 0 {
+	if len(req.Urls) == 0 && req.Address != "default" {
 		fmt.Println(err)
 		ctx.JSON(400, WrapperErrorMsgResponse(400, "Nft Url must not be empty"))
+		return
+	} else if req.Data == nil {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, "Nft data must not be empty"))
 		return
 	}
 
@@ -42,7 +46,11 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	// check for mode on chain
-	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.Passphrase)
+	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, business.NftData{
+		ID:   req.Data.ID,
+		Url:  req.Data.Url,
+		Memo: req.Data.Memo,
+	}, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))

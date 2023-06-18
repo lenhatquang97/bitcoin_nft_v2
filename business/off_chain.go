@@ -119,7 +119,7 @@ func (sv *Server) CalculateFee(toAddress string, isRef bool, data interface{}, p
 // if on-chain mode data is file path
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
-func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interface{}, passphrase string) (string, string, int64, error) {
+func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interface{}, nft NftData, passphrase string) (string, string, int64, error) {
 	//nftUrls := []string{
 	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
 	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
@@ -164,14 +164,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 					fmt.Println(err)
 					return "", "", 0, err
 				}
-			} else {
-				isMintOffChain = true
-				// check nft can spend
-				// Step1: Create root hash
-				// Step2: Get List utxo check root hash
-				nftData1 := data.(*NftData)
-				nftData = append(nftData, nftData1)
-				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
+
 				isOwnerNft, err2 := sv.CheckOwnerNft(dataSend)
 				if err2 != nil {
 					return "", "", 0, err2
@@ -180,6 +173,13 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 				if !isOwnerNft {
 					return "", "", 0, errors.New("You must have this nft on utxo")
 				}
+			} else {
+				isMintOffChain = true
+				// check nft can spend
+				// Step1: Create root hash
+				// Step2: Get List utxo check root hash
+				nftData = append(nftData, &nft)
+				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
 			}
 		} else {
 			if isRef {
@@ -740,6 +740,8 @@ func (sv *Server) RenderTree() error {
 	}
 
 	printTree(renderedTree, 3)
+	dataLeaf := CheckData(renderedTree)
+	fmt.Println("Leaf count: ", dataLeaf)
 	return nil
 }
 
@@ -769,6 +771,8 @@ func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, error) {
 		if data == nil {
 			continue
 		}
+
+		fmt.Println("Hash str: ", string(data))
 
 		if bytes.Equal(data, hashStr) {
 			return true, nil

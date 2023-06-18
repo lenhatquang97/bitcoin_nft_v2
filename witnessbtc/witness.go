@@ -45,8 +45,8 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte, mode string) ([]
 	flagEnd := "m25end"
 	flagData := "m25start-data"
 	flagRef := "m25start-ref"
-	flagStartOffChain := "m25off-chain-start"
-	flagEndOffChain := "m25off-chain-end"
+	flagStartOffChain := "m25off-chain-start-data"
+	flagEndOffChain := "m25off-chain-end-data"
 	isRef := false
 	if validPosition != -1 {
 		var endBodyPos, startBodyPos int
@@ -72,7 +72,7 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte, mode string) ([]
 				return nil, false
 			}
 
-			startBodyPos = startBodyPos1
+			startBodyPos = startBodyPos1 + len(flagStartOffChain)
 			endBodyPos = startBodyPos + 500
 			flagEnd = flagEndOffChain
 		}

@@ -8,10 +8,10 @@ import (
 )
 
 type NftData struct {
-	ID     string
-	Url    string
-	Memo   string
-	Binary string
+	ID     string `json:"id"`
+	Url    string `json:"url"`
+	Memo   string `json:"memo"`
+	Binary string `json:"binary"`
 }
 
 type RevealTxInput struct {
