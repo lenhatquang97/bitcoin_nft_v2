@@ -794,7 +794,7 @@ func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, string, error) {
 		fmt.Println("Hash str: ", string(data))
 
 		if bytes.Equal(data, hashStr) {
-			return true, "", nil
+			return true, utxos[i].TxID, nil
 		}
 	}
 
