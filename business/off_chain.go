@@ -155,13 +155,12 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 			if toAddress != "default" {
 				listItem := data.([]string)
 				if len(listItem) > 1 {
-					return "", "", 0, errors.New("Can send only one nft")
+					return "", "", 0, errors.New("can send only one nft")
 				}
 
 				for _, url := range listItem {
 					item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
 					if err != nil {
-						print("Get Nft Data Failed")
 						fmt.Println(err)
 						return "", "", 0, err
 					}
@@ -257,8 +256,6 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 		return "", "", 0, err
 	}
 
-	fmt.Println("===================================Checkpoint 1====================================")
-
 	revealTxInput := RevealTxInput{
 		CommitTxHash: commitTxHash,
 		Idx:          0,
@@ -303,9 +300,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 		}
 	}
 
-	fmt.Println("===================================Checkpoint 2====================================")
 	fmt.Printf("Your reveal tx hash is: %s\n", revealTxHash.String())
-	fmt.Println("===================================Success====================================")
 	return commitTxHash.String(), revealTxHash.String(), estimatedCommitTxFee + estimatedRevealTxFee, nil
 }
 

@@ -19,7 +19,6 @@ func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef strin
 	}
 	commitTxHash, err := sv.client.SendRawTransaction(commitTx, false)
 	if err != nil {
-		fmt.Println("Error in commit tx")
 		return nil, nil, err
 	}
 	return commitTxHash, wif, nil
@@ -91,9 +90,6 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	redeemTx.AddTxOut(redeemTxOut)
 
 	if int64(balance) < amount+fee {
-		fmt.Println(balance)
-		fmt.Println(amount)
-		fmt.Println(fee)
 		return nil, nil, fmt.Errorf("the balance of the account is not sufficient")
 	}
 

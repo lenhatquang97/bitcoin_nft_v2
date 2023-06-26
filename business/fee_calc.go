@@ -92,8 +92,6 @@ func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRe
 	txSize := mempool.GetTxVirtualSize(btcutil.NewTx(tx))
 	fee := txSize * int64(feeRate*100_000)
 
-	fmt.Println("Fee rate for reveal tx:", int64(feeRate*100_000))
-
 	if err != nil {
 		return 0, err
 	}
