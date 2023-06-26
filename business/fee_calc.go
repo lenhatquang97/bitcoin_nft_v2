@@ -37,10 +37,7 @@ func EstimateFeeForCommitTx(sv *Server, amount int64, dataSend []byte, isRef boo
 	outputScriptBuilder.AddOp(txscript.OP_1)
 	outputScriptBuilder.AddData(schnorr.SerializePubKey(outputKey))
 	outputScript, _ := outputScriptBuilder.Script()
-	redeemTx, err := utils.NewTx()
-	if err != nil {
-		return 0, err
-	}
+	redeemTx := wire.NewMsgTx(wire.TxVersion)
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
 		return 0, err

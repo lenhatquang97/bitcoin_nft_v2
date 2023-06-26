@@ -2,7 +2,6 @@ package ipfs
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -41,13 +40,11 @@ func DownloadOnIpfs(fileLink string) ([]byte, error) {
 	cid := fileLink[strings.LastIndex(fileLink, "/")+1 : strings.LastIndex(fileLink, "?")]
 	err := sh.Get(cid, "./")
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	binFile, err := ReadFileForIpfs("./" + cid)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

@@ -68,10 +68,7 @@ func CreateCommitTx(amount int64, client *rpcclient.Client, embeddedData []byte,
 	outputScript, _ := outputScriptBuilder.Script()
 
 	//Step 4: Create new transaction
-	redeemTx, err := utils.NewTx()
-	if err != nil {
-		return nil, nil, err
-	}
+	redeemTx := wire.NewMsgTx(wire.TxVersion)
 
 	for _, utxo := range sendUtxos {
 		utxoHash, err := chainhash.NewHashFromStr(utxo.TxID)

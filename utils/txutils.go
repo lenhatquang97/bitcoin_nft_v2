@@ -10,36 +10,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
-func CreateInscriptionScript(pubKey *secp256k1.PublicKey, embeddedData []byte) ([]byte, error) {
-	builder := txscript.NewScriptBuilder()
-	builder.AddData(schnorr.SerializePubKey(pubKey))
-	builder.AddOp(txscript.OP_CHECKSIG)
-	builder.AddOp(txscript.OP_0)
-	builder.AddOp(txscript.OP_IF)
-	chunks := ChunkSlice(embeddedData, 500)
-	for i, chunk := range chunks {
-		if i == 0 {
-			var tmp []byte
-			tmp = append(tmp, []byte("m25start")...)
-			tmp = append(tmp, chunk...)
-			builder.AddFullData(tmp)
-		} else if i == len(chunks)-1 {
-			var tmp []byte
-			tmp = append(tmp, chunk...)
-			tmp = append(tmp, []byte("m25end")...)
-			builder.AddFullData(tmp)
-		} else {
-			builder.AddFullData(chunk)
-		}
-	}
-	hashLockScript, err := builder.Script()
-	if err != nil {
-		return nil, err
-	}
-	hashLockScript = append(hashLockScript, txscript.OP_ENDIF)
-	return hashLockScript, nil
-}
-
 func CreateInscriptionScriptV2(pubKey *secp256k1.PublicKey, embeddedData []byte, isRef bool, mode string) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
 	builder.AddData(schnorr.SerializePubKey(pubKey))

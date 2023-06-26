@@ -1,12 +1,9 @@
 package witnessbtc
 
 import (
-	"bitcoin_nft_v2/utils"
 	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/btcsuite/btcd/btcec/v2"
 )
 
 func GetFileContentType(out *os.File) (string, error) {
@@ -47,29 +44,4 @@ func ReadFile(filePath string) ([]byte, string, error) {
 	}
 
 	return binFile, contentType, nil
-}
-
-func PrepareInscriptionData(data string, isRef bool) ([]byte, error) {
-	var rawData []byte
-	var err error
-	if isRef {
-		rawData = []byte(data)
-	} else {
-		rawData, _, err = ReadFile(data)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	privKey, _ := btcec.NewPrivateKey()
-	embeddedData, _ := utils.CreateInscriptionScriptV2(privKey.PubKey(), rawData, isRef, "on_chain")
-	return embeddedData, nil
-}
-
-func WriteData(body []byte, outputFilePath string) {
-	err := os.WriteFile(outputFilePath, body, 0644)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 }

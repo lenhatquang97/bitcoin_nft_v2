@@ -2,11 +2,8 @@ package utils
 
 import (
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcd/wire"
 )
 
 type MyUtxo struct {
@@ -55,49 +52,6 @@ func GetManyUtxo(client *rpcclient.Client, utxos []btcjson.ListUnspentResult, am
 	}
 
 	return res
-}
-
-func GetActualBalance(client *rpcclient.Client, actualAddress string) (int, error) {
-	utxos, err := client.ListUnspent()
-	if err != nil {
-		return -1, err
-	}
-	amount := 0
-
-	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == actualAddress {
-			//Note: This is balance for testnet
-			amount += int(utxos[i].Amount * 100_000_000)
-		}
-	}
-	return amount, nil
-}
-
-func NewTx() (*wire.MsgTx, error) {
-	return wire.NewMsgTx(wire.TxVersion), nil
-}
-
-func GetUtxo(utxos []btcjson.ListUnspentResult, address string) (string, uint32, float64) {
-	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == address {
-			return utxos[i].TxID, utxos[i].Vout, utxos[i].Amount
-		}
-	}
-	return "", 0, -1
-}
-func GetDefaultAddress(client *rpcclient.Client, senderAddress string, config *chaincfg.Params) (btcutil.Address, error) {
-	if len(senderAddress) == 0 {
-		testNetAddress, err := client.GetAccountAddress("default")
-		if err != nil {
-			return nil, err
-		}
-		return testNetAddress, nil
-	}
-	customAddress, err := btcutil.DecodeAddress(senderAddress, config)
-	if err != nil {
-		return nil, err
-	}
-	return customAddress, nil
 }
 
 func CheckTransactionHasNft(client *rpcclient.Client, txId string) (bool, error) {

@@ -185,7 +185,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 				}
 
 				if !isOwnerNft {
-					return "", "", 0, errors.New("You must have this nft on utxo")
+					return "", "", 0, errors.New("you must have this nft on utxo")
 				}
 
 				txIdRef = specialTxId
@@ -195,7 +195,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 				// Step1: Create root hash
 				// Step2: Get List utxo check root hash
 				nftData = append(nftData, &nft)
-				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
+				dataSend, keys, leafHash, _ = NewRootHashForReceiver(nftData)
 			}
 		} else {
 			if isRef {
@@ -470,7 +470,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 	}
 
 	if !isOwnerNft {
-		return errors.New("You must have this nft on utxo")
+		return errors.New("you must have this nft on utxo")
 	}
 
 	// import nft data and merge tree
@@ -658,7 +658,6 @@ func (sv *Server) GetAllNfts() ([][]byte, []string, []string, error) {
 	txIds := make([]string, 0)
 	orginalTxIds := make([]string, 0)
 	for i := 0; i < len(utxos); i++ {
-		//100_000_000 is because it's testnet
 		hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
 		if err != nil {
 			return nil, nil, nil, err
@@ -766,7 +765,6 @@ func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, string, error) {
 	}
 
 	for i := 0; i < len(utxos); i++ {
-		//100_000_000 is because it's testnet
 		hashId, err := chainhash.NewHashFromStr(utxos[i].TxID)
 		if err != nil {
 			return false, "", err
@@ -793,7 +791,7 @@ func (sv *Server) CheckOwnerNft(hashStr []byte) (bool, string, error) {
 		}
 	}
 
-	return false, "", errors.New("You must owner this nft")
+	return false, "", errors.New("you must owner this nft")
 }
 
 func getMaxWidth(root *nft_tree.VirtualTree, level int) int {

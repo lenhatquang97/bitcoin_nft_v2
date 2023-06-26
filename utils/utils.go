@@ -66,23 +66,3 @@ func FindStartOfByteArrayFromEnd(part []byte, array []byte, end int) int {
 	}
 	return -1
 }
-
-func FindMultiplePartsOfByteArray(part []byte, array []byte) []int {
-	m := len(part)
-	n := len(array)
-
-	result := make([]int, 0)
-
-	for i := 0; i <= n-m; i++ {
-		var j = 0
-		for j = 0; j < m; j++ {
-			if array[i+j] != part[j] {
-				break
-			}
-		}
-		if j == m {
-			result = append(result, i)
-		}
-	}
-	return result
-}

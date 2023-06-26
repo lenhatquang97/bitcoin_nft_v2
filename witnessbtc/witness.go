@@ -2,6 +2,7 @@ package witnessbtc
 
 import (
 	"bitcoin_nft_v2/utils"
+
 	"github.com/btcsuite/btcd/txscript"
 )
 
@@ -13,7 +14,6 @@ const (
 
 func GetPaddingInAddData(data []byte) int {
 	dataLen := len(data)
-	//Case it's a opcode
 	condition1 := dataLen == 0 || dataLen == 1 && data[0] == 0
 	condition2 := dataLen == 1 && data[0] <= 16
 	condition3 := dataLen == 1 && data[0] == 0x81
