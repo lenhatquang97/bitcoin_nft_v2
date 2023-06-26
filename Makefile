@@ -34,3 +34,4 @@ run-on-chain:
 .PHONY: postgres createdb dropdb migrate_up migrate_down sqlc run-test-net run-sim-net run-on-chain
 
 # Docker not run in case: sudo chmod 777 /var/run/docker.sock
+# Permanent: https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue
