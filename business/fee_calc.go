@@ -76,7 +76,7 @@ func EstimateFeeForCommitTx(sv *Server, amount int64, dataSend []byte, isRef boo
 }
 
 func EstimatedFeeForRevealTx(client *rpcclient.Client, embeddedData []byte, isRef bool, commitTxHash chainhash.Hash, commitOutput wire.TxOut, txOutIndex uint32, randPriv *btcec.PrivateKey, params *chaincfg.Params, toAddress string, amount int64) (int64, error) {
-	tx, _, _, _, err := CreateRevealTxObj(client, embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress, amount, "on_chain")
+	tx, _, _, _, err := CreateRevealTxObj(embeddedData, isRef, commitTxHash, commitOutput, txOutIndex, randPriv, params, toAddress, amount, "on_chain")
 	if err != nil {
 		return 0, err
 	}

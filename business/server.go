@@ -135,12 +135,6 @@ func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data i
 // else if off-chain mode data is list nft data (list by get data from db)
 // if don't have data in DB --> import nft
 func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interface{}, specialTxId string, nft NftData, passphrase string) (string, string, int64, error) {
-	//nftUrls := []string{
-	//	"https://genk.mediacdn.vn/k:thumb_w/640/2016/photo-1-1473821552147/top6suthatcucsocvepikachu.jpg",
-	//	"https://pianofingers.vn/wp-content/uploads/2020/12/organ-casio-ct-s100-1.jpg",
-	//	"https://amnhacvietthanh.vn/wp-content/uploads/2020/10/Yamaha-C40.jpg",
-	//}
-	//nameSpace := DefaultNameSpace
 	// Get Nft Data
 	var dataSend []byte
 	//var contentType string
@@ -174,8 +168,6 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 
 				dataSend, keys, leafHash, err = NewRootHashForReceiver(nftData)
 				if err != nil {
-					fmt.Println("Compute root hash for receiver error")
-					fmt.Println(err)
 					return "", "", 0, err
 				}
 
@@ -328,8 +320,6 @@ func (sv *Server) ViewNftData() ([]*NftData, error) {
 
 	nftDatas, err := sv.DB.GetAllNft(context.Background())
 	if err != nil {
-		fmt.Println("[ViewNftData] Get nft data error ", err)
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -480,8 +470,6 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 		Memo: memo,
 	})
 
-	fmt.Println("Key here: ", key)
-
 	// Init Root Hash For Receiver
 	leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
 	leaf.NodeHash()
@@ -499,7 +487,6 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 	//We use the default, in-memory store that doesn't actually use the
 	//context.
 
-	fmt.Println("Hash is: ", leaf.NodeHash().String())
 	updatedTree, err := tree.Insert(context.Background(), key, leaf)
 	if err != nil {
 		fmt.Println(err)
@@ -542,8 +529,6 @@ func (sv *Server) ExportProof(url string) (*NftData, error) {
 
 	nftData, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
 	if err != nil {
-		fmt.Println("[ExportProof] Get nft data error ", err)
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -576,7 +561,8 @@ func (sv *Server) ExportProof(url string) (*NftData, error) {
 
 	_, err = tree.Delete(context.Background(), key)
 	if err != nil {
-		fmt.Println("Delete leaf after reveal tx failed: ", err)
+		fmt.Println("[ExportProof] Delete nft leaf error ", err)
+		return nil, err
 	}
 
 	nodeHash := leaf.NodeHash()
@@ -588,6 +574,7 @@ func (sv *Server) ExportProof(url string) (*NftData, error) {
 	_, err = sv.DB.DeleteNode(context.Background(), destArray)
 	if err != nil {
 		fmt.Println("Delete leaf after reveal tx failed", err)
+		return nil, err
 	}
 
 	return nftDataRes, nil
@@ -605,13 +592,9 @@ func (sv *Server) SetMode(mode string) error {
 func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, error) {
 	var nftData []*NftData
 	fmt.Println(data)
-	item := data.([]string)[0]
-	fmt.Println("Item test", item)
 	for _, url := range data.([]string) {
 		item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
 		if err != nil {
-			print("Get Nft Data Failed")
-			fmt.Println(err)
 			return nil, err
 		}
 
@@ -624,8 +607,6 @@ func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, err
 
 	dataSend, _, _, err := NewRootHashForReceiver(nftData)
 	if err != nil {
-		fmt.Println("Compute root hash for receiver error")
-		fmt.Println(err)
 		return nil, err
 	}
 	return dataSend, nil
@@ -753,8 +734,6 @@ func (sv *Server) RenderTree() error {
 	}
 
 	printTree(renderedTree, 3)
-	dataLeaf := CheckData(renderedTree)
-	fmt.Println("Leaf count: ", dataLeaf)
 	return nil
 }
 
@@ -871,20 +850,4 @@ func getHeight(root *nft_tree.VirtualTree) int {
 		return leftHeight + 1
 	}
 	return rightHeight + 1
-}
-
-func CheckData(v *nft_tree.VirtualTree) int {
-	if v == nil {
-		return 0
-	}
-
-	a := CheckData(v.Left)
-	b := CheckData(v.Right)
-
-	res := 0
-	if v.Data != nil {
-		res = 1
-	}
-
-	return res + a + b
 }

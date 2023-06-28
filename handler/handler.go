@@ -22,24 +22,6 @@ const (
 
 var sv *business.Server
 
-var SimNetConfig = config.NetworkConfig{
-	Host:         "localhost:18554",
-	Endpoint:     "ws",
-	User:         "youruser",
-	Pass:         "SomeDecentp4ssw0rd",
-	Params:       "simnet",
-	ParamsObject: &chaincfg.SimNetParams,
-}
-
-var TestNetConfig = config.NetworkConfig{
-	Host:         "localhost:18332",
-	Endpoint:     "ws",
-	User:         "DeW+bgKg011pJHZnaBvgv/lMRks=",
-	Pass:         "wD9aohGo2f5LwVg7fdj1ntHQcfY=",
-	Params:       "testnet3",
-	ParamsObject: &chaincfg.TestNet3Params,
-}
-
 func Init(conf config.NetworkConfig, mode string) (*business.Server, error) {
 	var err error
 	sv, err = business.NewServer(&conf, mode)
