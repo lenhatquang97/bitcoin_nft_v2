@@ -43,7 +43,7 @@ const (
 
 type Server struct {
 	client *rpcclient.Client
-	mode   string
+	Mode   string
 	Config *config.NetworkConfig
 	DB     *db.PostgresStore
 }
@@ -65,7 +65,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 
 	return &Server{
 		client: client,
-		mode:   mode,
+		Mode:   mode,
 		Config: networkCfg,
 		DB:     store,
 	}, nil
@@ -74,7 +74,7 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data []string, passphrase string) (int64, error) {
 	var dataSend []byte
 	var err error
-	if sv.mode == OFF_CHAIN {
+	if sv.Mode == OFF_CHAIN {
 		if !isMint {
 			dataSend, err = sv.GetDataSendOffChain(data, isRef)
 		} else {
@@ -151,7 +151,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 	var leafHash []nft_tree.NodeHash
 	isMintOffChain := false
 	if isSendNft {
-		if sv.mode == OFF_CHAIN {
+		if sv.Mode == OFF_CHAIN {
 			var nftData []*NftData
 			if toAddress != "default" {
 				listItem := data.([]string)
@@ -265,13 +265,13 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 		ChainConfig:  sv.Config.ParamsObject,
 	}
 
-	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, 0, estimatedRevealTxFee, sv.mode)
+	revealTxHash, err := ExecuteRevealTransaction(sv.client, &revealTxInput, dataSend, isRef, toAddress, 0, estimatedRevealTxFee, sv.Mode)
 	if err != nil {
 		fmt.Println(err)
 		return "", "", 0, err
 	}
 
-	if sv.mode == OFF_CHAIN && !isMintOffChain {
+	if sv.Mode == OFF_CHAIN && !isMintOffChain {
 		for i, key := range keys {
 
 			txCreator := func(tx *sql.Tx) db.TreeStore {
@@ -323,7 +323,7 @@ func (sv *Server) CheckBalance(address string) (int, error) {
 
 func (sv *Server) ViewNftData() ([]*NftData, error) {
 	// get nft data from db
-	if sv.mode != OFF_CHAIN {
+	if sv.Mode != OFF_CHAIN {
 		return nil, errors.New("SERVER_MODE_IS_ON_CHAIN")
 	}
 
@@ -451,7 +451,7 @@ func (sv *Server) GetNftData() {
 }
 
 func (sv *Server) ImportProof(id, url, memo string) error {
-	if sv.mode != OFF_CHAIN {
+	if sv.Mode != OFF_CHAIN {
 		return errors.New("SERVER_MODE_IS_ON_CHAIN")
 	}
 
@@ -532,7 +532,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 }
 
 func (sv *Server) ExportProof(url string) (*NftData, error) {
-	if sv.mode != OFF_CHAIN {
+	if sv.Mode != OFF_CHAIN {
 		return nil, errors.New("SERVER_MODE_IS_ON_CHAIN")
 	}
 
@@ -599,7 +599,7 @@ func (sv *Server) SetMode(mode string) error {
 		return WrapperError("MODE_INVALID")
 	}
 
-	sv.mode = mode
+	sv.Mode = mode
 	return nil
 }
 

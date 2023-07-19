@@ -104,7 +104,7 @@ func WrapperPredefineEstimatedFee(ctx *gin.Context) {
 
 	// check for mode on chain
 	var data []string
-	if !req.IsMint {
+	if sv.Mode == ON_CHAIN {
 		data = req.Urls
 	} else {
 		data = req.Data

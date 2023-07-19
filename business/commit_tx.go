@@ -13,7 +13,7 @@ import (
 )
 
 func ExecuteCommitTransaction(sv *Server, data []byte, isRef bool, txIdRef string, amount int64, fee int64) (*chainhash.Hash, *btcutil.WIF, error) {
-	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, fee, sv.mode)
+	commitTx, wif, err := CreateCommitTx(amount, sv.client, data, isRef, txIdRef, fee, sv.Mode)
 	if err != nil {
 		return nil, nil, err
 	}
