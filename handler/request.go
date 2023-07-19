@@ -1,17 +1,16 @@
 package handler
 
-import "bitcoin_nft_v2/business"
-
 // SendRequest Post
 type SendRequest struct {
-	Address    string            `json:"address"`
-	Passphrase string            `json:"passphrase"`
-	IsSendNFT  bool              `json:"isSendNft"`
-	IsRef      bool              `json:"isRef"`
-	IsMint     bool              `json:"isMint"`
-	Urls       []string          `json:"urls"`
-	TxID       string            `json:"txId"`
-	Data       *business.NftData `json:"data"`
+	Address    string   `json:"address"`
+	Passphrase string   `json:"passphrase"`
+	IsSendNFT  bool     `json:"isSendNft"`
+	IsRef      bool     `json:"isRef"`
+	IsMint     bool     `json:"isMint"`
+	Urls       []string `json:"urls"`
+	TxID       string   `json:"txId"`
+	Data       []string `json:"data"`
+	//Data       *business.NftData `json:"data"`
 }
 
 // CheckBalanceRequest Get

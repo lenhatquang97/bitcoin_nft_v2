@@ -10,6 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	NFT_LEN_FORMAT = 3
+)
+
 type ErrorResponse struct {
 	Code    int32  `json:"code"`
 	Message string `json:"message"`
@@ -43,11 +47,21 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	var data business.NftData
-	if req.Data != nil {
-		data.ID = req.Data.ID
-		data.Url = req.Data.Url
-		data.Memo = req.Data.Memo
+	if len(req.Data) != NFT_LEN_FORMAT {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
+		return
 	}
+
+	for _, item := range req.Data {
+		if item == "" {
+			ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
+			return
+		}
+	}
+
+	data.ID = req.Data[0]
+	data.Url = req.Data[1]
+	data.Memo = req.Data[2]
 
 	// check for mode on chain
 	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.TxID, data, req.Passphrase)
