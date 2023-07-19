@@ -71,13 +71,14 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	}, nil
 }
 
-func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data interface{}, passphrase string) (int64, error) {
+func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data []string, passphrase string) (int64, error) {
 	var dataSend []byte
 	var err error
 	if sv.mode == OFF_CHAIN {
 		if !isMint {
 			dataSend, err = sv.GetDataSendOffChain(data, isRef)
 		} else {
+			// TODO Test doan marshal data nay
 			var dataStr []byte
 			var customData string
 			dataStr, err = json.Marshal(data)
@@ -602,12 +603,12 @@ func (sv *Server) SetMode(mode string) error {
 	return nil
 }
 
-func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, error) {
+func (sv *Server) GetDataSendOffChain(data []string, isRef bool) ([]byte, error) {
 	var nftData []*NftData
 	fmt.Println(data)
-	item := data.([]string)[0]
+	item := data[0]
 	fmt.Println("Item test", item)
-	for _, url := range data.([]string) {
+	for _, url := range data {
 		item, err := sv.DB.GetNFtDataByUrl(context.Background(), url)
 		if err != nil {
 			print("Get Nft Data Failed")
@@ -631,16 +632,16 @@ func (sv *Server) GetDataSendOffChain(data interface{}, isRef bool) ([]byte, err
 	return dataSend, nil
 }
 
-func (sv *Server) GetDataSendOnChain(data interface{}, isRef bool) ([]byte, error) {
+func (sv *Server) GetDataSendOnChain(data []string, isRef bool) ([]byte, error) {
 	if isRef {
-		customData, err := RawDataEncode(data.([]string)[0])
+		customData, err := RawDataEncode(data[0])
 		if err != nil {
 			return nil, err
 		}
 
 		return []byte(customData), nil
 	} else {
-		dataSend, err := hex.DecodeString(data.([]string)[0])
+		dataSend, err := hex.DecodeString(data[0])
 		if err != nil {
 			return nil, err
 		}
