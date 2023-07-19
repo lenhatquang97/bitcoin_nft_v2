@@ -150,7 +150,7 @@ func WrapperExportProof(ctx *gin.Context) {
 	ctx.JSON(200, &ExportProofResponse{
 		Code:    200,
 		Message: "OK",
-		Data: NftData{
+		Data: business.NftData{
 			ID:   data.ID,
 			Url:  data.Url,
 			Memo: data.Memo,
@@ -196,9 +196,9 @@ func WrapperViewNftData(ctx *gin.Context) {
 		return
 	}
 
-	var items []NftData
+	var items []business.NftData
 	for _, item := range nftData {
-		items = append(items, NftData{
+		items = append(items, business.NftData{
 			ID:     item.ID,
 			Url:    item.Url,
 			Memo:   item.Memo,

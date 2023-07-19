@@ -1,5 +1,7 @@
 package handler
 
+import "bitcoin_nft_v2/business"
+
 type SendResponseData struct {
 	RevealTxID string `json:"revealTxId"`
 	CommitTxID string `json:"commitTxId"`
@@ -24,23 +26,15 @@ type ImportProofResponse struct {
 }
 
 type ExportProofResponse struct {
-	Code    int32   `json:"code"`
-	Message string  `json:"message"`
-	Data    NftData `json:"data"`
-}
-
-type NftData struct {
-	ID     string `json:"id"`
-	Url    string `json:"url"`
-	Memo   string `json:"memo"`
-	TxID   string `json:"txId"`
-	Binary string `json:"binary"`
+	Code    int32            `json:"code"`
+	Message string           `json:"message"`
+	Data    business.NftData `json:"data"`
 }
 
 type ViewNftDataResponse struct {
-	Code    int32     `json:"code"`
-	Message string    `json:"message"`
-	Data    []NftData `json:"data"`
+	Code    int32              `json:"code"`
+	Message string             `json:"message"`
+	Data    []business.NftData `json:"data"`
 }
 
 type CreateWalletResponseData struct {
