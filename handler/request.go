@@ -7,7 +7,7 @@ type SendRequest struct {
 	IsSendNFT    bool     `json:"isSendNft"`
 	IsRef        bool     `json:"isRef"`
 	IsMint       bool     `json:"isMint"`
-	OnChainData  []string `json:"urls"`
+	OnChainData  []string `json:"onChainData"`
 	TxID         string   `json:"txId"`
 	OffChainData []string `json:"offChainData"`
 	//Data       *business.NftData `json:"data"`
