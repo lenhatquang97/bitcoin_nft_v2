@@ -47,21 +47,24 @@ func WrapperSend(ctx *gin.Context) {
 	}
 
 	var data business.NftData
-	if len(req.Data) != NFT_LEN_FORMAT {
-		ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
-		return
-	}
 
-	for _, item := range req.Data {
-		if item == "" {
+	if sv.Mode == OFF_CHAIN {
+		if len(req.Data) != NFT_LEN_FORMAT {
 			ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
 			return
 		}
-	}
 
-	data.ID = req.Data[0]
-	data.Url = req.Data[1]
-	data.Memo = req.Data[2]
+		for _, item := range req.Data {
+			if item == "" {
+				ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
+				return
+			}
+		}
+
+		data.ID = req.Data[0]
+		data.Url = req.Data[1]
+		data.Memo = req.Data[2]
+	}
 
 	// check for mode on chain
 	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.TxID, data, req.Passphrase)
@@ -376,7 +379,6 @@ func WrapperIpfsLink(ctx *gin.Context) {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, "filePath is required"))
 		return
 	}
-	fmt.Println(filePath)
 	fileLink, err := ipfs.GetIpfsLink(filePath)
 	if err != nil {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
