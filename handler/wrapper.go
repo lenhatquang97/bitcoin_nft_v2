@@ -35,7 +35,7 @@ func WrapperSend(ctx *gin.Context) {
 		return
 	}
 
-	if len(req.Urls) == 0 && req.Address != "default" {
+	if len(req.OnChainData) == 0 && req.Address != "default" {
 		fmt.Println(err)
 		ctx.JSON(400, WrapperErrorMsgResponse(400, "Nft Url must not be empty"))
 		return
@@ -49,25 +49,25 @@ func WrapperSend(ctx *gin.Context) {
 	var data business.NftData
 
 	if sv.Mode == OFF_CHAIN {
-		if len(req.Data) != NFT_LEN_FORMAT {
+		if len(req.OffChainData) != NFT_LEN_FORMAT {
 			ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
 			return
 		}
 
-		for _, item := range req.Data {
+		for _, item := range req.OffChainData {
 			if item == "" {
 				ctx.JSON(400, WrapperErrorMsgResponse(400, "Data is empty"))
 				return
 			}
 		}
 
-		data.ID = req.Data[0]
-		data.Url = req.Data[1]
-		data.Memo = req.Data[2]
+		data.ID = req.OffChainData[0]
+		data.Url = req.OffChainData[1]
+		data.Memo = req.OffChainData[2]
 	}
 
 	// check for mode on chain
-	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.Urls, req.TxID, data, req.Passphrase)
+	commitTxId, revealTxId, fee, err := sv.Send(req.Address, req.IsSendNFT, req.IsRef, req.OnChainData, req.TxID, data, req.Passphrase)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))
@@ -94,7 +94,7 @@ func WrapperPredefineEstimatedFee(ctx *gin.Context) {
 		return
 	}
 
-	if len(req.Urls) == 0 {
+	if len(req.OnChainData) == 0 {
 		fmt.Println(err)
 		ctx.JSON(400, "Nft Url must not be empty")
 		return
@@ -108,9 +108,9 @@ func WrapperPredefineEstimatedFee(ctx *gin.Context) {
 	// check for mode on chain
 	var data []string
 	if sv.Mode == ON_CHAIN {
-		data = req.Urls
+		data = req.OnChainData
 	} else {
-		data = req.Data
+		data = req.OffChainData
 	}
 	fee, err := sv.CalculateFee(req.Address, req.IsRef, req.IsMint, data, req.Passphrase)
 	if err != nil {

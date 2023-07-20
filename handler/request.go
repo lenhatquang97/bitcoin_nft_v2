@@ -2,14 +2,14 @@ package handler
 
 // SendRequest Post
 type SendRequest struct {
-	Address    string   `json:"address"`
-	Passphrase string   `json:"passphrase"`
-	IsSendNFT  bool     `json:"isSendNft"`
-	IsRef      bool     `json:"isRef"`
-	IsMint     bool     `json:"isMint"`
-	Urls       []string `json:"urls"`
-	TxID       string   `json:"txId"`
-	Data       []string `json:"data"`
+	Address      string   `json:"address"`
+	Passphrase   string   `json:"passphrase"`
+	IsSendNFT    bool     `json:"isSendNft"`
+	IsRef        bool     `json:"isRef"`
+	IsMint       bool     `json:"isMint"`
+	OnChainData  []string `json:"urls"`
+	TxID         string   `json:"txId"`
+	OffChainData []string `json:"offChainData"`
 	//Data       *business.NftData `json:"data"`
 }
 
