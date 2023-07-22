@@ -176,17 +176,7 @@ func WrapperExportProof(ctx *gin.Context) {
 }
 
 func WrapperCheckBalance(ctx *gin.Context) {
-	var req CheckBalanceRequest
-	err := ctx.ShouldBindJSON(&req)
-	if err != nil {
-		ctx.JSON(500, WrapperErrorMsgResponse(500, err.Error()))
-	}
-	if req.Address == "" {
-		ctx.JSON(400, WrapperErrorMsgResponse(400, "Input invalid"))
-		return
-	}
-
-	balance, err := sv.CheckBalance(req.Address)
+	balance, err := sv.CheckBalance()
 	if err != nil {
 		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
 		return

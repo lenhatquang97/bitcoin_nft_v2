@@ -305,7 +305,7 @@ func (sv *Server) Send(toAddress string, isSendNft bool, isRef bool, data interf
 	return commitTxHash.String(), revealTxHash.String(), estimatedCommitTxFee + estimatedRevealTxFee, nil
 }
 
-func (sv *Server) CheckBalance(address string) (int, error) {
+func (sv *Server) CheckBalance() (int, error) {
 	utxos, err := sv.client.ListUnspent()
 	if err != nil {
 		return -1, err
@@ -313,10 +313,7 @@ func (sv *Server) CheckBalance(address string) (int, error) {
 	amount := 0
 
 	for i := 0; i < len(utxos); i++ {
-		if utxos[i].Address == address {
-			//100_000_000 is because it's testnet
-			amount += int(utxos[i].Amount * 100_000_000)
-		}
+		amount += int(utxos[i].Amount * 100_000_000)
 	}
 	return amount, nil
 }
