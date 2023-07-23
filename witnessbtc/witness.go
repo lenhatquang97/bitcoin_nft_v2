@@ -81,19 +81,22 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte, mode string) ([]
 			flagEnd = flagEndOffChain
 		}
 
+		oldFinalPos := utils.FindStartOfByteArrayFromEnd([]byte("m25end"), embeddedData, len(embeddedData)-1)
+		newFinalPos := utils.FindStartOfByteArrayFromEnd([]byte(flagEnd), embeddedData, len(embeddedData)-1)
+		finalBodyPos := int(math.Max(float64(oldFinalPos), float64(newFinalPos)))
+
 		if endBodyPos < len(embeddedData) {
-			for endBodyPos < len(embeddedData) {
+			for endBodyPos < finalBodyPos {
 				body = append(body, embeddedData[startBodyPos:endBodyPos]...)
 				padding := GetPaddingInAddData(embeddedData[startBodyPos:endBodyPos])
 				startBodyPos = endBodyPos + padding
 				endBodyPos = startBodyPos + 500
+				if endBodyPos >= finalBodyPos {
+					startBodyPos -= padding
+				}
 			}
-			finalBodyPos := utils.FindStartOfByteArrayFromEnd([]byte(flagEnd), embeddedData, len(embeddedData)-1)
 			body = append(body, embeddedData[startBodyPos:finalBodyPos]...)
 		} else {
-			oldFinalPos := utils.FindStartOfByteArrayFromEnd([]byte("m25end"), embeddedData, len(embeddedData)-1)
-			newFinalPos := utils.FindStartOfByteArrayFromEnd([]byte(flagEnd), embeddedData, len(embeddedData)-1)
-			finalBodyPos := int(math.Max(float64(oldFinalPos), float64(newFinalPos)))
 			body = append(body, embeddedData[startBodyPos:finalBodyPos-1]...)
 		}
 	}
