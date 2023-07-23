@@ -2,8 +2,6 @@ package witnessbtc
 
 import (
 	"bitcoin_nft_v2/utils"
-	"math"
-
 	"github.com/btcsuite/btcd/txscript"
 )
 
@@ -81,9 +79,7 @@ func DeserializeWitnessDataIntoInscription(embeddedData []byte, mode string) ([]
 			flagEnd = flagEndOffChain
 		}
 
-		oldFinalPos := utils.FindStartOfByteArrayFromEnd([]byte("m25end"), embeddedData, len(embeddedData)-1)
-		newFinalPos := utils.FindStartOfByteArrayFromEnd([]byte(flagEnd), embeddedData, len(embeddedData)-1)
-		finalBodyPos := int(math.Max(float64(oldFinalPos), float64(newFinalPos)))
+		finalBodyPos := utils.FindStartOfByteArrayFromEnd([]byte(flagEnd), embeddedData, len(embeddedData)-1)
 
 		if endBodyPos < len(embeddedData) {
 			for endBodyPos < finalBodyPos {
