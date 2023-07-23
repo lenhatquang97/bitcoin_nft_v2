@@ -15,9 +15,14 @@ type SendResponse struct {
 }
 
 type CheckBalanceResponse struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-	Data    int64  `json:"data"`
+	Code    int32          `json:"code"`
+	Message string         `json:"message"`
+	Data    BalanceAccount `json:"data"`
+}
+
+type BalanceAccount struct {
+	Balance int64  `json:"balance"`
+	Account string `json:"account"`
 }
 
 type ImportProofResponse struct {

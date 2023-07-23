@@ -71,6 +71,14 @@ func NewServer(networkCfg *config.NetworkConfig, mode string) (*Server, error) {
 	}, nil
 }
 
+func (sv *Server) GetAddressForReceiving() (string, error) {
+	account, err := sv.client.GetAccountAddress("default")
+	if err != nil {
+		return "", err
+	}
+	return account.EncodeAddress(), nil
+}
+
 func (sv *Server) CalculateFee(toAddress string, isRef bool, isMint bool, data []string, passphrase string) (int64, error) {
 	var dataSend []byte
 	var err error

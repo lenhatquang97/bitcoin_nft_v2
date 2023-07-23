@@ -182,10 +182,19 @@ func WrapperCheckBalance(ctx *gin.Context) {
 		return
 	}
 
+	defaultAddress, err := sv.GetAddressForReceiving()
+	if err != nil {
+		ctx.JSON(400, WrapperErrorMsgResponse(400, err.Error()))
+		return
+	}
+
 	ctx.JSON(200, &CheckBalanceResponse{
 		Code:    200,
 		Message: "OK",
-		Data:    int64(balance),
+		Data: BalanceAccount{
+			Balance: int64(balance),
+			Account: defaultAddress,
+		},
 	})
 }
 
