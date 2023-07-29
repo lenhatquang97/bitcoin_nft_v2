@@ -120,7 +120,6 @@ func (t *taroTreeStoreTx) InsertBranch(branch *nft_tree.BranchNode) error {
 		HashKey:  hashKey[:],
 		LHashKey: lHashKey[:],
 		RHashKey: rHashKey[:],
-		Sum:      int64(branch.NodeSum()),
 	}); err != nil {
 		return fmt.Errorf("unable to insert branch: %w", err)
 	}
@@ -134,7 +133,6 @@ func (t *taroTreeStoreTx) InsertLeaf(leaf *nft_tree.LeafNode) error {
 	if err := t.dbTx.InsertLeaf(t.ctx, NewLeaf{
 		HashKey: hashKey[:],
 		Value:   leaf.Value,
-		Sum:     int64(leaf.NodeSum()),
 	}); err != nil {
 		return fmt.Errorf("unable to insert leaf: %w", err)
 	}
@@ -152,7 +150,6 @@ func (t *taroTreeStoreTx) InsertCompactedLeaf(
 		HashKey: hashKey[:],
 		Key:     key[:],
 		Value:   leaf.Value,
-		Sum:     int64(leaf.NodeSum()),
 	}); err != nil {
 		return fmt.Errorf("unable to insert compacted leaf: %w", err)
 	}
@@ -230,9 +227,7 @@ func (t *taroTreeStoreTx) GetChildren(height int, hashKey nft_tree.NodeHash) (
 
 		// Since both children are nil, we can assume this is a leaf.
 		if row.LHashKey == nil && row.RHashKey == nil {
-			leaf := nft_tree.NewLeafNode(
-				row.Value, uint64(row.Sum),
-			)
+			leaf := nft_tree.NewLeafNode(row.Value)
 
 			// Precompute the node hash key.
 			leaf.NodeHash()
@@ -256,7 +251,7 @@ func (t *taroTreeStoreTx) GetChildren(height int, hashKey nft_tree.NodeHash) (
 				return nil, nil, err
 			}
 
-			node = nft_tree.NewComputedBranch(hashKey, uint64(row.Sum))
+			node = nft_tree.NewComputedBranch(hashKey)
 		}
 
 		if isLeft {
@@ -286,7 +281,7 @@ func (t *taroTreeStoreTx) RootNode() (nft_tree.Node, error) {
 		return nil, err
 	}
 
-	root = nft_tree.NewComputedBranch(nodeHash, uint64(rootNode.Sum))
+	root = nft_tree.NewComputedBranch(nodeHash)
 
 	return root, nil
 }

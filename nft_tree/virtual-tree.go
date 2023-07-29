@@ -11,7 +11,6 @@ type VirtualTree struct {
 	Right *VirtualTree
 	Hash  *NodeHash
 	Value []byte
-	Sum   *uint64
 	Data  *NftData
 }
 

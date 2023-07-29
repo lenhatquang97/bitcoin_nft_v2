@@ -42,7 +42,7 @@ func NewRootHashForReceiver(nftData []*NftData) ([]byte, [][32]byte, []nft_tree.
 
 		keys = append(keys, key)
 		// Init Root Hash For Receiver
-		leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
+		leaf := nft_tree.NewLeafNode(dataByte) // CoinsToSend
 		leafHash = append(leafHash, leaf.NodeHash())
 
 		updatedTree, err := tree.Insert(context.TODO(), key, leaf)

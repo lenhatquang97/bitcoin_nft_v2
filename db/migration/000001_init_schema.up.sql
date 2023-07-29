@@ -9,8 +9,6 @@ CREATE TABLE IF NOT EXISTS nft_nodes (
 
                                            value BYTEA,
 
-                                           sum BIGINT NOT NULL,
-
                                            PRIMARY KEY (hash_key)
     );
 

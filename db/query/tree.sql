@@ -1,28 +1,28 @@
 -- name: InsertBranch :exec
 INSERT INTO nft_nodes (
-    hash_key, l_hash_key, r_hash_key, key, value, sum
-) VALUES ($1, $2, $3, NULL, NULL, $4);
+    hash_key, l_hash_key, r_hash_key, key, value
+) VALUES ($1, $2, $3, NULL, NULL);
 
 -- name: InsertLeaf :exec
 INSERT INTO nft_nodes (
-    hash_key, l_hash_key, r_hash_key, key, value, sum
-) VALUES ($1, NULL, NULL, NULL, $2, $3);
+    hash_key, l_hash_key, r_hash_key, key, value
+) VALUES ($1, NULL, NULL, NULL, $2);
 
 -- name: InsertCompactedLeaf :exec
 INSERT INTO nft_nodes (
-    hash_key, l_hash_key, r_hash_key, key, value, sum
-) VALUES ($1, NULL, NULL, $2, $3, $4);
+    hash_key, l_hash_key, r_hash_key, key, value
+) VALUES ($1, NULL, NULL, $2, $3);
 
 -- name: FetchChildren :many
 WITH RECURSIVE mssmt_branches_cte (
-                                   hash_key, l_hash_key, r_hash_key, key, value, sum, depth
+                                   hash_key, l_hash_key, r_hash_key, key, value, depth
     )
                    AS (
-        SELECT r.hash_key, r.l_hash_key, r.r_hash_key, r.key, r.value, r.sum, 0 as depth
+        SELECT r.hash_key, r.l_hash_key, r.r_hash_key, r.key, r.value, 0 as depth
         FROM nft_nodes r
         WHERE r.hash_key = $1
         UNION ALL
-        SELECT n.hash_key, n.l_hash_key, n.r_hash_key, n.key, n.value, n.sum, depth+1
+        SELECT n.hash_key, n.l_hash_key, n.r_hash_key, n.key, n.value, depth+1
         FROM nft_nodes n, mssmt_branches_cte b
         WHERE n.hash_key=b.l_hash_key OR n.hash_key=b.r_hash_key
     ) SELECT * FROM mssmt_branches_cte WHERE depth < 3;
@@ -30,13 +30,13 @@ WITH RECURSIVE mssmt_branches_cte (
 
 -- name: FetchChildrenSelfJoin :many
 WITH subtree_cte (
-                  hash_key, l_hash_key, r_hash_key, key, value, sum, depth
+                  hash_key, l_hash_key, r_hash_key, key, value, depth
     ) AS (
-    SELECT r.hash_key, r.l_hash_key, r.r_hash_key, r.key, r.value, r.sum, 0 as depth
+    SELECT r.hash_key, r.l_hash_key, r.r_hash_key, r.key, r.value, 0 as depth
     FROM nft_nodes r
     WHERE r.hash_key = $1
     UNION ALL
-    SELECT c.hash_key, c.l_hash_key, c.r_hash_key, c.key, c.value, c.sum, depth+1
+    SELECT c.hash_key, c.l_hash_key, c.r_hash_key, c.key, c.value, depth+1
     FROM nft_nodes c
              INNER JOIN subtree_cte r ON r.l_hash_key=c.hash_key OR r.r_hash_key=c.hash_key
 ) SELECT * from subtree_cte WHERE depth < 3;

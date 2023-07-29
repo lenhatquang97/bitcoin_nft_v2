@@ -3,8 +3,6 @@ package utils
 import (
 	"bitcoin_nft_v2/nft_tree"
 	"crypto/sha256"
-	"encoding/binary"
-
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -68,7 +66,6 @@ func GetNftRoot(c *nft_tree.BranchNode) []byte {
 		nodeHash := c.NodeHash()
 		h := sha256.New()
 		_, _ = h.Write(nodeHash[:])
-		_ = binary.Write(h, binary.BigEndian, c.NodeSum())
 		return h.Sum(nil)
 	}
 
@@ -79,7 +76,6 @@ func GetNftRoot(c *nft_tree.BranchNode) []byte {
 	//_, _ = h.Write(c.AssetID[:])
 	_, _ = h.Write(left[:])
 	_, _ = h.Write(right[:])
-	_ = binary.Write(h, binary.BigEndian, c.NodeSum())
 	return h.Sum(nil)
 }
 

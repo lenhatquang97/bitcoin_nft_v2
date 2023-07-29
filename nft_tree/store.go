@@ -141,7 +141,7 @@ func NewStoreWithDB(nodes []sqlc.NftNode) (*DefaultStore, error) {
 			if err != nil {
 				return nil, err
 			}
-			branches[nodeHash] = NewComputedBranch(nodeHash, uint64(node.Sum))
+			branches[nodeHash] = NewComputedBranch(nodeHash)
 		} else { // leaf node
 			nodeHash, err := newKey(node.HashKey)
 			if err != nil {
@@ -153,7 +153,7 @@ func NewStoreWithDB(nodes []sqlc.NftNode) (*DefaultStore, error) {
 				return nil, err
 			}
 			compactedLeaves[nodeHash] = &CompactedLeafNode{
-				LeafNode: NewLeafNode(node.LHashKey, uint64(node.Sum)),
+				LeafNode: NewLeafNode(node.LHashKey),
 				key:      k,
 			}
 		}

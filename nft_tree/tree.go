@@ -35,7 +35,6 @@ func init() {
 		// read/populate this value causing a race condition.
 		branch := NewBranch(EmptyTree[i+1], EmptyTree[i+1])
 		branch.NodeHash()
-		branch.NodeSum()
 
 		EmptyTree[i] = branch
 	}
@@ -324,7 +323,6 @@ func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftDa
 					currentTree = currentTree.Left
 					branchNode := left.(*BranchNode)
 					currentTree.Hash = branchNode.nodeHash
-					currentTree.Sum = branchNode.sum
 					//next, sibling = left, right
 					next = left
 				} else {
@@ -341,7 +339,6 @@ func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftDa
 					currentTree = currentTree.Right
 					branchNode := right.(*BranchNode)
 					currentTree.Hash = branchNode.nodeHash
-					currentTree.Sum = branchNode.sum
 					//next, sibling = right, left
 					next = right
 				}
@@ -355,7 +352,6 @@ func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftDa
 
 			currentTree.Hash = leaf.nodeHash
 			currentTree.Value = leaf.Value
-			currentTree.Sum = &leaf.sum
 
 			value := data[key]
 			currentTree.Data = &value
@@ -376,7 +372,6 @@ func (t *FullTree) RenderTree(ctx context.Context, data map[[hashSize]byte]NftDa
 	}
 
 	virtualTree.Hash = root.nodeHash
-	virtualTree.Sum = root.sum
 	// get all data and compute key
 
 	// mapping data into map

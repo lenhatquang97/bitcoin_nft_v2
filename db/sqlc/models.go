@@ -17,7 +17,6 @@ type NftNode struct {
 	RHashKey []byte `json:"r_hash_key"`
 	Key      []byte `json:"key"`
 	Value    []byte `json:"value"`
-	Sum      int64  `json:"sum"`
 }
 
 type NftRoot struct {

@@ -489,7 +489,7 @@ func (sv *Server) ImportProof(id, url, memo string) error {
 	fmt.Println("Key here: ", key)
 
 	// Init Root Hash For Receiver
-	leaf := nft_tree.NewLeafNode(dataByte, 0) // CoinsToSend
+	leaf := nft_tree.NewLeafNode(dataByte) // CoinsToSend
 	leaf.NodeHash()
 
 	txCreator := func(tx *sql.Tx) db.TreeStore {
@@ -569,7 +569,7 @@ func (sv *Server) ExportProof(url string) (*NftData, error) {
 
 	dataByte, key := ComputeNftDataByte(nftDataRes)
 
-	leaf := nft_tree.NewLeafNode(dataByte, 0) // C
+	leaf := nft_tree.NewLeafNode(dataByte)
 	txCreator := func(tx *sql.Tx) db.TreeStore {
 		return sv.DB.WithTx(tx)
 	}
